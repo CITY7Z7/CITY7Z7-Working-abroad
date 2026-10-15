@@ -16,6 +16,7 @@ data class NoteEntity(
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB) val iv: ByteArray? = null,
     val articleId: String? = null,
     val pinned: Boolean = false,
+    val isLocked: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
@@ -39,6 +40,7 @@ data class NoteEntity(
         } else if (other.iv != null) return false
         if (articleId != other.articleId) return false
         if (pinned != other.pinned) return false
+        if (isLocked != other.isLocked) return false
         if (createdAt != other.createdAt) return false
         if (updatedAt != other.updatedAt) return false
 
@@ -54,6 +56,7 @@ data class NoteEntity(
         result = 31 * result + (iv?.contentHashCode() ?: 0)
         result = 31 * result + (articleId?.hashCode() ?: 0)
         result = 31 * result + pinned.hashCode()
+        result = 31 * result + isLocked.hashCode()
         result = 31 * result + createdAt.hashCode()
         result = 31 * result + updatedAt.hashCode()
         return result

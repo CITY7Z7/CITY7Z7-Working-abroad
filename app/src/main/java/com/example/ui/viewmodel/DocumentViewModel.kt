@@ -112,7 +112,7 @@ class DocumentViewModel(
                 articleId = note.articleId,
                 isPreviewMode = false,
                 saveStatus = "Сохранено",
-                isLocked = isLocked,
+                isLocked = note.isLocked || isLocked,
                 charCount = body.length,
                 charLimitExceeded = body.length > 200_000
             )
@@ -120,6 +120,7 @@ class DocumentViewModel(
     }
 
     fun onTitleChange(newTitle: String) {
+        if (_editorState.value.isLocked) return
         pushUndo()
         _editorState.value = _editorState.value.copy(
             title = newTitle,
@@ -130,6 +131,7 @@ class DocumentViewModel(
     }
 
     fun onBodyChange(newBody: String) {
+        if (_editorState.value.isLocked) return
         pushUndo()
         val limitExceeded = newBody.length > 200_000
         _editorState.value = _editorState.value.copy(
@@ -140,6 +142,12 @@ class DocumentViewModel(
             canUndo = undoHistory.isNotEmpty()
         )
         scheduleAutoSave()
+    }
+
+    fun toggleLocked() {
+        val newLocked = !_editorState.value.isLocked
+        _editorState.value = _editorState.value.copy(isLocked = newLocked)
+        saveCurrentNoteImmediately()
     }
 
     fun togglePreviewMode() {
@@ -229,7 +237,8 @@ class DocumentViewModel(
                 cipher = cipher,
                 iv = iv,
                 articleId = state.articleId,
-                pinned = state.isPinned
+                pinned = state.isPinned,
+                isLocked = state.isLocked
             )
 
             val newId = repository.saveNote(note)

@@ -90,7 +90,7 @@ fun QrCardScreen(
     }
 
     val matrix = remember(qrContent) {
-        viewModel.generateQrMatrix(qrContent, 512)
+        viewModel.generateQrMatrix(qrContent, 0)
     }
 
     Column(

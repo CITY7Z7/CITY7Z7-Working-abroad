@@ -1,10 +1,16 @@
 package com.example.ui.screens
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,20 +20,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.HorizontalRule
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,6 +62,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -84,6 +106,18 @@ fun NoteEditorScreen(
     var pasteResultToShow by remember { mutableStateOf<PasteResult?>(null) }
     var selectedPasteMode by remember { mutableStateOf(PasteMode.CLEANED) }
 
+    // Android Zero-permission Photo Picker
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val imgMd = "\n\n![Изображение]($uri)\n\n"
+            val updated = if (editorState.body.isBlank()) imgMd.trimStart() else editorState.body + imgMd
+            documentViewModel.onBodyChange(updated)
+            Toast.makeText(context, "Изображение добавлено в заметку", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(noteId) {
         if (noteId != null && noteId != 0L) {
             documentViewModel.loadNote(noteId)
@@ -98,43 +132,24 @@ fun NoteEditorScreen(
             .background(MaterialTheme.colorScheme.background)
             .testTag("note_editor_screen")
     ) {
-        // Top Action Bar
+        // 1. Top Action Bar with all mandatory actions
         BreadcrumbsHeader(
             breadcrumbs = listOf("Заметки", if (editorState.isPrivate) "Приватная заметка" else editorState.title.ifBlank { "Без названия" }),
             onBack = onBack,
             actions = {
-                // Undo
-                IconButton(
-                    onClick = { documentViewModel.undo() },
-                    enabled = editorState.canUndo,
-                    modifier = Modifier.testTag("undo_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Undo,
-                        contentDescription = "Отмена",
-                        tint = if (editorState.canUndo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                    )
-                }
-
-                // Smart Paste from clipboard
-                IconButton(
+                // Save button
+                Button(
                     onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val item = clipboard.primaryClip?.getItemAt(0)
-                        val text = item?.text?.toString() ?: ""
-                        if (text.isNotBlank()) {
-                            pasteResultToShow = PasteNormalizer.process(text, selectedPasteMode)
-                        } else {
-                            Toast.makeText(context, "Буфер обмена пуст", Toast.LENGTH_SHORT).show()
-                        }
+                        documentViewModel.saveCurrentNoteImmediately()
+                        Toast.makeText(context, "Заметка сохранена", Toast.LENGTH_SHORT).show()
                     },
-                    modifier = Modifier.testTag("paste_button")
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.testTag("save_note_button")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentPaste,
-                        contentDescription = "Вставить из буфера",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Сохранить", style = MaterialTheme.typography.labelSmall)
                 }
 
                 // Pin toggle
@@ -149,15 +164,19 @@ fun NoteEditorScreen(
                     )
                 }
 
-                // Private toggle (AES-256)
+                // Lock Read-Only toggle
                 IconButton(
-                    onClick = { documentViewModel.togglePrivate() },
-                    modifier = Modifier.testTag("private_button")
+                    onClick = {
+                        documentViewModel.toggleLocked()
+                        val msg = if (!editorState.isLocked) "Заметка заблокирована от изменений" else "Заметка разблокирована"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.testTag("lock_button")
                 ) {
                     Icon(
-                        imageVector = if (editorState.isPrivate) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = "Приватная заметка",
-                        tint = if (editorState.isPrivate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        imageVector = if (editorState.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
+                        contentDescription = "Заблокировать от изменений",
+                        tint = if (editorState.isLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -167,11 +186,29 @@ fun NoteEditorScreen(
                     modifier = Modifier.testTag("preview_toggle_button")
                 ) {
                     Icon(
-                        imageVector = if (editorState.isPreviewMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = null
+                        imageVector = if (editorState.isPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (editorState.isPreviewMode) "Редактор" else "Просмотр")
+                    Text(if (editorState.isPreviewMode) "Редактор" else "Просмотр", style = MaterialTheme.typography.labelSmall)
+                }
+
+                // Copy Text
+                IconButton(
+                    onClick = {
+                        val full = buildString {
+                            if (editorState.title.isNotBlank()) append(editorState.title).append("\n\n")
+                            append(editorState.body)
+                        }
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Заметка", full)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(context, "Текст заметки скопирован", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.testTag("copy_text_button")
+                ) {
+                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Копировать текст", tint = MaterialTheme.colorScheme.primary)
                 }
 
                 // Delete
@@ -186,19 +223,33 @@ fun NoteEditorScreen(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
-        // Status Row (Save status, char counter)
+        // 2. Status Bar: Lock warning or Save status & Char count
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 6.dp),
+                .background(if (editorState.isLocked) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = editorState.saveStatus,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (editorState.isLocked) {
+                    Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Заблокировано от изменений (только чтение)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Text(
+                        text = editorState.saveStatus,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editorState.charLimitExceeded) {
@@ -217,7 +268,37 @@ fun NoteEditorScreen(
             }
         }
 
-        // Editor Body or Preview
+        // 3. Markdown Formatting Toolbar (when not in preview mode and not locked)
+        if (!editorState.isPreviewMode && !editorState.isLocked) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+            MarkdownToolbar(
+                onInsertText = { snippet ->
+                    val appended = if (editorState.body.isBlank()) snippet else "${editorState.body}\n$snippet"
+                    documentViewModel.onBodyChange(appended)
+                },
+                onPickImage = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                onSmartPaste = {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val item = clipboard.primaryClip?.getItemAt(0)
+                    val text = item?.text?.toString() ?: ""
+                    if (text.isNotBlank()) {
+                        pasteResultToShow = PasteNormalizer.process(text, selectedPasteMode)
+                    } else {
+                        Toast.makeText(context, "Буфер обмена пуст", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onUndo = { documentViewModel.undo() },
+                canUndo = editorState.canUndo
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+        // 4. Editor Body or Preview
         BoxContainerCentered {
             Column(
                 modifier = Modifier
@@ -229,6 +310,7 @@ fun NoteEditorScreen(
                     BasicTextField(
                         value = editorState.title,
                         onValueChange = { documentViewModel.onTitleChange(it) },
+                        enabled = !editorState.isLocked,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
@@ -253,7 +335,7 @@ fun NoteEditorScreen(
                     )
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Body Monospace Input
                     Box(
@@ -264,6 +346,7 @@ fun NoteEditorScreen(
                         BasicTextField(
                             value = editorState.body,
                             onValueChange = { documentViewModel.onBodyChange(it) },
+                            enabled = !editorState.isLocked,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("note_body_input"),
@@ -272,7 +355,7 @@ fun NoteEditorScreen(
                             decorationBox = { innerTextField ->
                                 if (editorState.body.isEmpty()) {
                                     Text(
-                                        text = "Текст в формате Markdown (поддерживаются заголовки, списки, чек-листы - [ ], таблицы, цитаты)...",
+                                        text = "Текст в формате Markdown (поддерживаются заголовки, списки, чек-листы - [ ], картинки ![alt](url), таблицы, цитаты)...",
                                         style = EditorTextStyle.copy(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                         )
@@ -283,7 +366,7 @@ fun NoteEditorScreen(
                         )
                     }
                 } else {
-                    // Preview Mode with Interactive Checklists
+                    // Preview Mode with Interactive Checklists and Markdown
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -303,7 +386,9 @@ fun NoteEditorScreen(
                         MarkdownRenderer(
                             markdownText = editorState.body,
                             onCheckboxClick = { lineIndex, currentChecked ->
-                                documentViewModel.toggleCheckboxInPreview(lineIndex, currentChecked)
+                                if (!editorState.isLocked) {
+                                    documentViewModel.toggleCheckboxInPreview(lineIndex, currentChecked)
+                                }
                             }
                         )
                     }
@@ -319,7 +404,7 @@ fun NoteEditorScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Удалить заметку?") },
-            text = { Text("Заметка будет удалена. Вы сможете отменить удаление в течение 5 секунд.") },
+            text = { Text("Заметка будет удалена безвозвратно. Вы сможете отменить удаление в течение 5 секунд через уведомление.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -431,5 +516,118 @@ fun NoteEditorScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun MarkdownToolbar(
+    onInsertText: (String) -> Unit,
+    onPickImage: () -> Unit,
+    onSmartPaste: () -> Unit,
+    onUndo: () -> Unit,
+    canUndo: Boolean
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Undo
+            IconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Отмена", modifier = Modifier.size(18.dp))
+            }
+
+            // Headings
+            ToolbarButton(label = "H1") { onInsertText("# Заголовок 1") }
+            ToolbarButton(label = "H2") { onInsertText("## Заголовок 2") }
+            ToolbarButton(label = "H3") { onInsertText("### Заголовок 3") }
+
+            // Bold
+            IconButton(onClick = { onInsertText("**жирный текст**") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.FormatBold, contentDescription = "Жирный", modifier = Modifier.size(18.dp))
+            }
+
+            // Italic
+            IconButton(onClick = { onInsertText("*курсивный текст*") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.FormatItalic, contentDescription = "Курсив", modifier = Modifier.size(18.dp))
+            }
+
+            // Checklist
+            IconButton(onClick = { onInsertText("- [ ] Новый пункт") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.Checklist, contentDescription = "Чек-лист", modifier = Modifier.size(18.dp))
+            }
+
+            // Bullet list
+            IconButton(onClick = { onInsertText("- Пункт списка") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.FormatListBulleted, contentDescription = "Список", modifier = Modifier.size(18.dp))
+            }
+
+            // Numbered list
+            IconButton(onClick = { onInsertText("1. Первый пункт") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.FormatListNumbered, contentDescription = "Нумерованный", modifier = Modifier.size(18.dp))
+            }
+
+            // Quote
+            IconButton(onClick = { onInsertText("> Важная цитата") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.FormatQuote, contentDescription = "Цитата", modifier = Modifier.size(18.dp))
+            }
+
+            // Table
+            IconButton(
+                onClick = {
+                    onInsertText(
+                        "| Параметр | Значение |\n|---|---|\n| Ставка | 14.15 € |\n| Налог | 20% |"
+                    )
+                },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(Icons.Default.TableChart, contentDescription = "Таблица", modifier = Modifier.size(18.dp))
+            }
+
+            // Divider
+            IconButton(onClick = { onInsertText("---") }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.HorizontalRule, contentDescription = "Разделитель", modifier = Modifier.size(18.dp))
+            }
+
+            // Image Picker
+            AssistChip(
+                onClick = onPickImage,
+                label = { Text("Картинка", style = MaterialTheme.typography.labelSmall) },
+                leadingIcon = {
+                    Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp))
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+
+            // Smart Paste
+            IconButton(onClick = onSmartPaste, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.ContentPaste, contentDescription = "Вставить", modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolbarButton(label: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.extraSmall,
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.height(28.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp)) {
+            Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+        }
     }
 }

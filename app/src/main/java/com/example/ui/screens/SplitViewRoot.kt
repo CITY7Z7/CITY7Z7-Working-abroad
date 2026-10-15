@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -45,7 +44,7 @@ fun SplitViewRoot(
     val selectedCountry = countries.firstOrNull { it.id == selectedCountryId }
 
     // System BackHandler
-    BackHandler(enabled = currentSelection != Selection.Home) {
+    BackHandler(enabled = currentSelection != Selection.Home && currentSelection != Selection.NotesHub) {
         mainViewModel.navigateBack()
     }
 
@@ -89,8 +88,8 @@ fun SplitViewRoot(
                 }
             }
         } else {
-            // Single-Pane Responsive View
-            if (currentSelection == Selection.Home) {
+            // Single-Pane Responsive View: user sees NotesHub by default, can open NavigationMenu
+            if (currentSelection == Selection.NavigationMenu) {
                 LeftNavigationPane(
                     mainViewModel = mainViewModel,
                     modifier = Modifier.fillMaxSize()
@@ -107,7 +106,13 @@ fun SplitViewRoot(
                     onThemeChange = onThemeChange,
                     selectedCountry = selectedCountry,
                     rates = rates,
-                    onBack = { mainViewModel.navigateBack() }
+                    onBack = {
+                        if (currentSelection == Selection.Home || currentSelection == Selection.NotesHub) {
+                            mainViewModel.select(Selection.NavigationMenu)
+                        } else {
+                            mainViewModel.navigateBack()
+                        }
+                    }
                 )
             }
         }
@@ -129,9 +134,27 @@ private fun RenderContentPane(
     onBack: (() -> Unit)?
 ) {
     when (selection) {
-        Selection.Home, is Selection.Country -> {
+        // Notes Hub as the primary home screen
+        Selection.Home, Selection.NotesHub -> {
+            NotesHubScreen(
+                repository = repository,
+                onNoteClick = { noteId -> mainViewModel.select(Selection.Note(noteId)) },
+                onNewNoteClick = {
+                    documentViewModel.initNewNote()
+                    mainViewModel.select(Selection.NewNote)
+                },
+                onBack = onBack
+            )
+        }
+        Selection.NavigationMenu -> {
+            LeftNavigationPane(
+                mainViewModel = mainViewModel,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        is Selection.Country -> {
             ArticleDetailScreen(
-                articleId = "${selectedCountry?.id ?: "ie"}.fact_card",
+                articleId = "${selection.id}.fact_card",
                 country = selectedCountry,
                 rates = rates,
                 documentViewModel = documentViewModel,
@@ -140,6 +163,16 @@ private fun RenderContentPane(
                     documentViewModel.initNewNote(articleId)
                     mainViewModel.select(Selection.NewNote)
                 }
+            )
+        }
+        is Selection.SectionArticles -> {
+            SectionArticlesScreen(
+                countryId = selection.countryId,
+                sectionId = selection.sectionId,
+                sectionTitle = selection.sectionTitle,
+                repository = repository,
+                onArticleClick = { articleId -> mainViewModel.select(Selection.Article(articleId)) },
+                onBack = onBack
             )
         }
         is Selection.Article -> {
@@ -195,12 +228,23 @@ private fun RenderContentPane(
                 )
             }
         }
+        Selection.KnowledgeImport -> {
+            KnowledgeImportScreen(
+                repository = repository,
+                onBack = onBack
+            )
+        }
         Selection.Sos -> {
             SosScreen(repository = repository, onBack = onBack)
         }
         is Selection.Search -> {
-            // Displays search results
-            SimpleArticleKindScreen("Результаты поиска: ${selection.query}", ArticleKind.GUIDE, repository, onBack)
+            SearchResultsScreen(
+                query = selection.query,
+                mainViewModel = mainViewModel,
+                onArticleClick = { articleId -> mainViewModel.select(Selection.Article(articleId)) },
+                onNoteClick = { noteId -> mainViewModel.select(Selection.Note(noteId)) },
+                onBack = onBack
+            )
         }
         Selection.Profile -> {
             ProfileScreen(repository = repository, onBack = onBack)

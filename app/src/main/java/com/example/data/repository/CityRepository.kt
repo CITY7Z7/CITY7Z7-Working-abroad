@@ -60,6 +60,10 @@ class CityRepository(
 
     fun observeArticleById(id: String): Flow<ArticleEntity?> = database.articleDao().observeArticleById(id)
 
+    suspend fun insertArticles(articles: List<ArticleEntity>) = database.articleDao().insertArticles(articles)
+
+    suspend fun insertArticle(article: ArticleEntity) = database.articleDao().insertArticle(article)
+
     fun getRatesForCountry(countryId: String): Flow<List<RateEntity>> =
         database.rateDao().getRatesForCountry(countryId)
 

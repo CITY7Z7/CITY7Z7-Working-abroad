@@ -19,16 +19,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,13 +36,13 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import com.example.data.database.entity.PersonProfileEntity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +53,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.database.entity.PersonProfileEntity
 import com.example.domain.expiry.ExpiryCalculator
 import com.example.domain.expiry.ExpiryUrgency
 import com.example.ui.components.KeyFiguresCard
@@ -70,7 +70,6 @@ fun LeftNavigationPane(
     val countries by mainViewModel.countries.collectAsState()
     val selectedCountryId by mainViewModel.selectedCountryId.collectAsState()
     val sections by mainViewModel.currentCountrySections.collectAsState()
-    val factCard by mainViewModel.currentCountryFactCard.collectAsState()
     val rates by mainViewModel.currentCountryRates.collectAsState()
     val week1Progress by mainViewModel.week1Progress.collectAsState()
     val expiringDocs by mainViewModel.expiringDocuments.collectAsState()
@@ -90,13 +89,18 @@ fun LeftNavigationPane(
         // 1. Search Field
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { mainViewModel.updateSearchQuery(it) },
+            onValueChange = { query ->
+                mainViewModel.updateSearchQuery(query)
+                if (query.isNotBlank()) {
+                    mainViewModel.select(Selection.Search(query))
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("search_field"),
             placeholder = {
                 Text(
-                    text = "PPS, налог, аренда, 112… (Ctrl+K)",
+                    text = "Поиск (статьи, заметки, термины)...",
                     style = MaterialTheme.typography.bodySmall
                 )
             },
@@ -115,92 +119,84 @@ fun LeftNavigationPane(
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Scrollable Body
+        // Scrollable Navigation List (Order: 1. Заметки -> 2. Общие инструменты -> 3. Разделы стран)
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 2. Country Selector Chips
+            // ==========================================
+            // 1-й БЛОК: ЗАМЕТКИ (главный раздел по ТЗ)
+            // ==========================================
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                countries.forEach { country ->
-                    val isSelected = country.id == selectedCountryId
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { mainViewModel.selectCountry(country.id) },
-                        label = {
-                            Text(
-                                text = "${country.flagEmoji} ${country.nameRu}",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                Text(
+                    text = "📝 ЗАМЕТКИ",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Button(
+                        onClick = { mainViewModel.select(Selection.NewNote) },
+                        contentPadding = ButtonDefaults.TextButtonContentPadding,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Создать", modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Создать", style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp))
+                    }
+                }
+            }
+
+            NavigationItemRow(
+                title = "Все заметки (Сборник)",
+                isSelected = currentSelection is Selection.Home || currentSelection is Selection.NotesHub,
+                onClick = { mainViewModel.select(Selection.NotesHub) }
+            )
+
+            // Recent 5 notes
+            recentNotes.take(5).forEach { note ->
+                val isSelected = (currentSelection as? Selection.Note)?.id == note.id
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { mainViewModel.select(Selection.Note(note.id)) }
+                        .padding(vertical = 5.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (note.pinned) {
+                        Icon(imageVector = Icons.Default.PushPin, contentDescription = "Закреплено", modifier = Modifier.size(13.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    if (note.isLocked) {
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = "Заблокировано", modifier = Modifier.size(13.dp), tint = MaterialTheme.colorScheme.error)
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = if (note.isPrivate) "🔒 Приватная" else note.title.ifBlank { "Без названия" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1
                     )
                 }
             }
 
-            // 3. Key Figures Card
-            KeyFiguresCard(country = selectedCountry, rates = rates)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
-            // 4. Profile & Document Hub Entry
-            ProfileSummaryBlock(
-                profile = profile,
-                onProfileClick = { mainViewModel.select(Selection.Profile) },
-                onDocumentsClick = { mainViewModel.select(Selection.Documents()) }
-            )
-
-            // 5. Expiring Documents Block ("Требуют внимания")
-            if (expiringDocs.isNotEmpty()) {
-                AttentionNeededBlock(
-                    expiringDocs = expiringDocs,
-                    onDocClick = { mainViewModel.select(Selection.Document(it.id)) }
-                )
-            }
-
-            // 6. "Сегодня" Block: Week 1 Progress
-            Week1ProgressBlock(
-                completed = week1Progress.first,
-                total = week1Progress.second,
-                onClick = { mainViewModel.select(Selection.Checklist("ie.w1")) }
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-
-            // 7. Country Sections
+            // ==========================================
+            // 2-й БЛОК: ОБЩИЕ ИНСТРУМЕНТЫ
+            // ==========================================
             Text(
-                text = "Разделы: ${selectedCountry?.nameRu ?: ""}",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            sections.forEach { section ->
-                NavigationItemRow(
-                    title = section.titleRu,
-                    isSelected = false,
-                    onClick = {
-                        // Navigate to section or first article
-                        mainViewModel.select(Selection.Country(selectedCountryId))
-                    }
-                )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-
-            // 8. General Tools
-            Text(
-                text = "Общие инструменты",
+                text = "🛠 ОБЩИЕ ИНСТРУМЕНТЫ",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -216,7 +212,14 @@ fun LeftNavigationPane(
             }
 
             NavigationItemRow(
-                title = "QR-визитка (Офлайн)",
+                title = "Импорт и веб-парсер знаний",
+                isSelected = currentSelection is Selection.KnowledgeImport,
+                icon = Icons.Default.CloudDownload,
+                onClick = { mainViewModel.select(Selection.KnowledgeImport) }
+            )
+
+            NavigationItemRow(
+                title = "QR-визитка (Быстрая)",
                 isSelected = currentSelection is Selection.QrCard,
                 icon = Icons.Default.QrCode,
                 onClick = { mainViewModel.select(Selection.QrCard) }
@@ -229,82 +232,101 @@ fun LeftNavigationPane(
                 onClick = { mainViewModel.select(Selection.ShareLog) }
             )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
-            // 9. Notes Section
+            // ==========================================
+            // 3-й БЛОК: РАЗДЕЛЫ СТРАН
+            // ==========================================
+            Text(
+                text = "🌍 СПРАВОЧНИКИ ПО СТРАНАМ",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Country Selector Chips
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = "Заметки",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Button(
-                    onClick = { mainViewModel.select(Selection.NewNote) },
-                    contentPadding = ButtonDefaults.TextButtonContentPadding,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Новая заметка", modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Создать", style = MaterialTheme.typography.labelSmall)
-                }
-            }
-
-            recentNotes.take(5).forEach { note ->
-                val isSelected = (currentSelection as? Selection.Note)?.id == note.id
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { mainViewModel.select(Selection.Note(note.id)) }
-                        .padding(vertical = 6.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (note.isPrivate) {
-                        Icon(imageVector = Icons.Default.Lock, contentDescription = "Приватная", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = if (note.isPrivate) "Приватная заметка" else note.title.ifBlank { "Без названия" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        maxLines = 1
+                countries.forEach { country ->
+                    val isSelected = country.id == selectedCountryId
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            mainViewModel.selectCountry(country.id)
+                            mainViewModel.select(Selection.Country(country.id))
+                        },
+                        label = {
+                            Text(
+                                text = "${country.flagEmoji} ${country.nameRu}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // Key Figures Card
+            KeyFiguresCard(country = selectedCountry, rates = rates)
 
-        // 10. Fixed SOS Button (Only red element)
-        Button(
-            onClick = { mainViewModel.select(Selection.Sos) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .testTag("sos_button"),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = Color.White
-            ),
-            shape = MaterialTheme.shapes.small
-        ) {
-            Icon(
-                imageVector = Icons.Default.Phone,
-                contentDescription = "SOS Экстренно",
-                tint = Color.White
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+            // Country Sections List
             Text(
-                text = "ЭКСТРЕННО / SOS (112)",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = Color.White
+                text = "Разделы: ${selectedCountry?.nameRu ?: ""}",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            sections.forEach { section ->
+                val isSelected = (currentSelection as? Selection.SectionArticles)?.sectionId == section.id
+                NavigationItemRow(
+                    title = section.titleRu,
+                    isSelected = isSelected,
+                    onClick = {
+                        mainViewModel.select(
+                            Selection.SectionArticles(
+                                countryId = selectedCountryId,
+                                sectionId = section.id,
+                                sectionTitle = section.titleRu
+                            )
+                        )
+                    }
+                )
+            }
+
+            // Week 1 Progress (if Ireland)
+            if (selectedCountryId == "ie") {
+                Week1ProgressBlock(
+                    completed = week1Progress.first,
+                    total = week1Progress.second,
+                    onClick = { mainViewModel.select(Selection.Checklist("ie.w1")) }
+                )
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+            // ==========================================
+            // 4-й БЛОК: ПРОФИЛЬ И ДОКУМЕНТ-ХАБ (ZERO-TRUST)
+            // ==========================================
+            ProfileSummaryBlock(
+                profile = profile,
+                onProfileClick = { mainViewModel.select(Selection.Profile) },
+                onDocumentsClick = { mainViewModel.select(Selection.Documents()) }
+            )
+
+            if (expiringDocs.isNotEmpty()) {
+                AttentionNeededBlock(
+                    expiringDocs = expiringDocs,
+                    onDocClick = { mainViewModel.select(Selection.Document(it.id)) }
+                )
+            }
         }
     }
 }
@@ -336,7 +358,7 @@ private fun ProfileSummaryBlock(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val displayName = if (profile != null && profile.fullNameRu.isNotBlank()) profile.fullNameRu else "Мой профиль"
-                val displayProf = if (profile != null && profile.profession.isNotBlank()) profile.profession else "Документ-хаб"
+                val displayProf = if (profile != null && profile.profession.isNotBlank()) profile.profession else "Документ-хаб (Защищено)"
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = displayName,
@@ -356,13 +378,13 @@ private fun ProfileSummaryBlock(
 
             Button(
                 onClick = onDocumentsClick,
-                modifier = Modifier.fillMaxWidth().height(36.dp),
+                modifier = Modifier.fillMaxWidth().height(34.dp),
                 shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Icon(imageVector = Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Документ-хаб", style = MaterialTheme.typography.labelSmall)
+                Text("Документ-хаб (AES-256)", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -446,7 +468,7 @@ private fun Week1ProgressBlock(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Сегодня: Первые 7 дней",
+                    text = "Чек-лист: Первые 7 дней",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -484,14 +506,14 @@ private fun NavigationItemRow(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(17.dp),
                     tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))

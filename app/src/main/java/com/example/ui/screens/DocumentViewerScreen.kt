@@ -179,6 +179,7 @@ fun DocumentViewerScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
+                                    .background(androidx.compose.ui.graphics.Color.White)
                                     .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small)
                                     .verticalScroll(rememberScrollState()),
                                 contentAlignment = Alignment.Center

@@ -140,6 +140,7 @@ class DocumentHubViewModel(
         return try {
             val page = renderer.openPage(pageIndex)
             val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+            bitmap.eraseColor(android.graphics.Color.WHITE)
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
             page.close()
             bitmap
@@ -247,15 +248,16 @@ class DocumentHubViewModel(
     // --- QR-Code Generation (ZXing Core) ---
     fun generateQrMatrix(
         content: String,
-        size: Int = 512
+        size: Int = 0
     ): Array<BooleanArray>? {
         if (content.isBlank()) return null
         return try {
             val hints = mapOf(
                 EncodeHintType.CHARACTER_SET to "UTF-8",
-                EncodeHintType.MARGIN to 2
+                EncodeHintType.MARGIN to 1
             )
             val writer = QRCodeWriter()
+            // Using size 0 gives the minimal module dimensions (e.g. 29x29 or 33x33), drastically reducing loop size
             val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size, hints)
             val width = bitMatrix.width
             val height = bitMatrix.height
@@ -266,6 +268,37 @@ class DocumentHubViewModel(
                 }
             }
             result
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun generateQrBitmap(
+        content: String,
+        size: Int = 512,
+        moduleColor: Int = android.graphics.Color.BLACK,
+        bgColor: Int = android.graphics.Color.WHITE
+    ): Bitmap? {
+        if (content.isBlank()) return null
+        return try {
+            val hints = mapOf(
+                EncodeHintType.CHARACTER_SET to "UTF-8",
+                EncodeHintType.MARGIN to 1
+            )
+            val writer = QRCodeWriter()
+            val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size, hints)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            val pixels = IntArray(width * height)
+            for (y in 0 until height) {
+                val offset = y * width
+                for (x in 0 until width) {
+                    pixels[offset + x] = if (bitMatrix.get(x, y)) moduleColor else bgColor
+                }
+            }
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+            bitmap
         } catch (_: Exception) {
             null
         }

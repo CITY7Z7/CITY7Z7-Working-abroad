@@ -71,6 +71,10 @@ android {
   }
 }
 
+base {
+  archivesName.set("CITY7Z7-Working-abroad")
+}
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {
@@ -101,6 +105,7 @@ dependencies {
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.zxing.core)
   implementation(libs.androidx.biometric)
+  implementation(libs.coil.compose)
   implementation(libs.kotlinx.serialization.json)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)

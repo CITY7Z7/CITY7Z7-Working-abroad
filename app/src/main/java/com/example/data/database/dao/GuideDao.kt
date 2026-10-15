@@ -71,6 +71,9 @@ interface ArticleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertArticles(articles: List<ArticleEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertArticle(article: ArticleEntity)
+
     @Query("INSERT INTO article_fts(docid, titleRu, keywords, bodyMd) VALUES(:docid, :titleRu, :keywords, :bodyMd)")
     suspend fun insertArticleFts(docid: Long, titleRu: String, keywords: String, bodyMd: String)
 

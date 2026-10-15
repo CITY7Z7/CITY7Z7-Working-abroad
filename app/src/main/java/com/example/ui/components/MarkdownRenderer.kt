@@ -158,6 +158,32 @@ fun MarkdownRenderer(
                 is MarkdownNode.Table -> {
                     TableBlock(node)
                 }
+                is MarkdownNode.Image -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        coil.compose.AsyncImage(
+                            model = node.url,
+                            contentDescription = node.alt.ifBlank { "Изображение" },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(260.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                        )
+                        if (node.alt.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = node.alt,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
                 MarkdownNode.Divider -> {
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outline,

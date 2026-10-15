@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,11 +43,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Secure screen against unauthorized screenshots by default per Section 2
-        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-
         setContent {
-            var currentThemeSetting by remember { mutableStateOf("AUTO") }
+            var currentThemeSetting by remember { mutableStateOf("LIGHT") }
             val systemDark = isSystemInDarkTheme()
             val useDarkTheme = when (currentThemeSetting) {
                 "DARK" -> true
@@ -55,7 +53,11 @@ class MainActivity : ComponentActivity() {
             }
 
             CityTheme(darkTheme = useDarkTheme) {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .systemBarsPadding()
+                ) {
                     SplitViewRoot(
                         mainViewModel = mainViewModel,
                         documentViewModel = documentViewModel,

@@ -62,7 +62,7 @@ import com.example.data.database.entity.UserContactEntity
         DocumentAlertEntity::class,
         ShareLogEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class CityDatabase : RoomDatabase() {

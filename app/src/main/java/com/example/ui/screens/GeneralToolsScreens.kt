@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,11 +27,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,7 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.database.entity.ArticleEntity
 import com.example.data.database.entity.ArticleKind
-import com.example.data.database.entity.ShareLogEntity
+import com.example.data.database.entity.VerificationStatus
 import com.example.data.database.entity.UserContactEntity
 import com.example.data.repository.CityRepository
 import com.example.ui.components.BreadcrumbsHeader
@@ -71,8 +77,13 @@ fun SimpleArticleKindScreen(
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    val articles by repository.getArticlesByKind(kind).collectAsState(initial = emptyList())
-    val article = articles.firstOrNull()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var selectedCountry by remember { mutableStateOf<String?>("ie") }
+    val profile by repository.profile.collectAsState(initial = null)
+    val articles by repository.getArticlesByKind(kind, selectedCountry).collectAsState(initial = emptyList())
+
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -81,7 +92,25 @@ fun SimpleArticleKindScreen(
     ) {
         BreadcrumbsHeader(
             breadcrumbs = listOf("Инструменты", title),
-            onBack = onBack
+            onBack = onBack,
+            actions = {
+                Button(
+                    onClick = { showCreateDialog = true },
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        when (kind) {
+                            ArticleKind.TEMPLATE -> "+ Новое письмо"
+                            ArticleKind.PHRASE_SET -> "+ Новая фраза"
+                            ArticleKind.GLOSSARY -> "+ Новый термин"
+                            else -> "+ Добавить"
+                        },
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
@@ -89,17 +118,208 @@ fun SimpleArticleKindScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                if (article != null) {
-                    MarkdownRenderer(markdownText = article.bodyMd)
+                // Country filter row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedCountry == "ie",
+                        onClick = { selectedCountry = "ie" },
+                        label = { Text("🇮🇪 Ирландия") },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
+                    )
+                    FilterChip(
+                        selected = selectedCountry == "de",
+                        onClick = { selectedCountry = "de" },
+                        label = { Text("🇩🇪 Германия") },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
+                    )
+                    FilterChip(
+                        selected = selectedCountry == "nl",
+                        onClick = { selectedCountry = "nl" },
+                        label = { Text("🇳🇱 Нидерланды") },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
+                    )
+                    FilterChip(
+                        selected = selectedCountry == null,
+                        onClick = { selectedCountry = null },
+                        label = { Text("🌍 Все страны") },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
+                    )
+                }
+
+                if (articles.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Материалы для выбранной страны пока не добавлены",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Нажмите «+ Добавить», чтобы вставить нужный текст из интернета.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 } else {
-                    Text("Загрузка контента...", style = MaterialTheme.typography.bodyMedium)
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(articles, key = { it.id }) { item ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.medium,
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = item.titleRu,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+
+                                        // Copy button
+                                        IconButton(
+                                            onClick = {
+                                                val p = profile
+                                                val replacedBody = item.bodyMd
+                                                    .replace("{{ФИО}}", p?.fullNameLatin?.ifBlank { p?.fullNameRu } ?: "Иван Иванов")
+                                                    .replace("{{Телефон}}", p?.phone ?: "+353 00 000 0000")
+                                                    .replace("{{Email}}", p?.email ?: "example@mail.com")
+                                                    .replace("{{Профессия}}", p?.profession ?: "Специалист")
+
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                val clip = ClipData.newPlainText(item.titleRu, replacedBody)
+                                                clipboard.setPrimaryClip(clip)
+                                                Toast.makeText(context, "Текст скопирован с подстановкой профиля!", Toast.LENGTH_SHORT).show()
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Копировать",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+                                    MarkdownRenderer(markdownText = item.bodyMd)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    // Dialog for adding custom template / phrase / glossary
+    if (showCreateDialog) {
+        var newTitle by remember { mutableStateOf("") }
+        var newBody by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            title = {
+                Text(
+                    when (kind) {
+                        ArticleKind.TEMPLATE -> "Новый шаблон письма"
+                        ArticleKind.PHRASE_SET -> "Новые фразы для разговорника"
+                        ArticleKind.GLOSSARY -> "Новый термин"
+                        else -> "Добавить материал"
+                    }
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Вставьте или напишите текст. Можно использовать теги {{ФИО}}, {{Телефон}}, {{Email}} для автоподстановки из профиля.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = newTitle,
+                        onValueChange = { newTitle = it },
+                        label = { Text("Заголовок / Название") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = newBody,
+                        onValueChange = { newBody = it },
+                        label = { Text("Текст (поддерживает Markdown)") },
+                        modifier = Modifier.fillMaxWidth().height(160.dp),
+                        maxLines = 8
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newTitle.isNotBlank() && newBody.isNotBlank()) {
+                            val country = selectedCountry ?: "ie"
+                            val article = ArticleEntity(
+                                id = "$country.${kind.name.lowercase()}.${UUID.randomUUID().toString().take(8)}",
+                                countryId = country,
+                                sectionId = "$country.general",
+                                kind = kind,
+                                titleRu = newTitle.trim(),
+                                subtitle = "Добавлено пользователем",
+                                bodyMd = newBody.trim(),
+                                keywords = "${newTitle.trim()} $country",
+                                applicableTo = "ANY",
+                                sourceIds = "custom",
+                                verifiedAt = java.time.LocalDate.now().toString(),
+                                status = VerificationStatus.VERIFIED,
+                                archived = 0,
+                                sortOrder = 100
+                            )
+                            scope.launch {
+                                repository.insertArticle(article)
+                                showCreateDialog = false
+                                Toast.makeText(context, "Сохранено!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    enabled = newTitle.isNotBlank() && newBody.isNotBlank()
+                ) {
+                    Text("Сохранить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }
 
@@ -126,9 +346,9 @@ fun ContactsScreen(
                     onClick = { showAddDialog = true },
                     shape = MaterialTheme.shapes.small
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Добавить")
+                    Text("Добавить", style = MaterialTheme.typography.labelSmall)
                 }
             }
         )
@@ -138,7 +358,7 @@ fun ContactsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (contacts.isEmpty()) {
@@ -272,7 +492,7 @@ fun ShareLogScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(

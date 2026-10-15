@@ -38,6 +38,14 @@ object MarkdownParser {
                 continue
             }
 
+            // 3.5 Images (![alt](url))
+            val imageMatch = Regex("^!\\[(.*?)\\]\\((.*?)\\)$").matchEntire(line)
+            if (imageMatch != null) {
+                nodes.add(MarkdownNode.Image(alt = imageMatch.groupValues[1], url = imageMatch.groupValues[2]))
+                i++
+                continue
+            }
+
             // 4. Headings (#)
             if (line.startsWith("#")) {
                 var level = 0

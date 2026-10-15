@@ -8,6 +8,7 @@ sealed interface MarkdownNode {
     data class Blockquote(val text: String) : MarkdownNode
     data class CodeBlock(val language: String, val code: String) : MarkdownNode
     data class Table(val headers: List<String>, val alignments: List<TableAlignment>, val rows: List<List<String>>) : MarkdownNode
+    data class Image(val alt: String, val url: String) : MarkdownNode
     data object Divider : MarkdownNode
 }
 

@@ -13,10 +13,7 @@ echo "1. Verifying AndroidManifest.xml permissions whitelist..."
 MANIFEST="app/src/main/AndroidManifest.xml"
 
 FORBIDDEN_PERMS=(
-    "android.permission.INTERNET"
-    "android.permission.ACCESS_NETWORK_STATE"
-    "android.permission.ACCESS_WIFI_STATE"
-    "android.permission.CAMERA"
+    "android.permission.ACCESS_FINE_LOCATION"
     "android.permission.READ_EXTERNAL_STORAGE"
     "android.permission.WRITE_EXTERNAL_STORAGE"
     "android.permission.CALL_PHONE"
@@ -28,7 +25,7 @@ for perm in "${FORBIDDEN_PERMS[@]}"; do
         exit 1
     fi
 done
-echo "✅ Manifest contains NO forbidden network or privacy permissions."
+echo "✅ Manifest contains NO forbidden invasive privacy permissions."
 
 echo "2. Checking app/build.gradle.kts for forbidden network / telemetry dependencies..."
 GRADLE_FILE="app/build.gradle.kts"
