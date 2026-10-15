@@ -1,0 +1,32 @@
+package com.example.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Light Theme Palette (Fixed per specification)
+val LightBackground = Color(0xFFF6F4EF)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceRaised = Color(0xFFECEAE4)
+val LightTextPrimary = Color(0xFF1C1B19)
+val LightTextSecondary = Color(0xFF5C5A55)
+val LightAccent = Color(0xFF0F5C57)
+val LightAccentLight = Color(0xFF7FD1C7)
+val LightDivider = Color(0xFFDEDAD2)
+val LightDisabled = Color(0xFFC4C0B8)
+val LightAlert = Color(0xFFB42318)
+val LightTagBackground = Color(0xFFE2EFEA)
+
+// Dark Theme Palette (Exclusively OKLCH calculated per Section 19)
+val DarkBackground = oklch(0.26, 0.03, 243.97)
+val DarkSurface = oklch(0.29, 0.02, 243.30)
+val DarkSurfaceRaised = oklch(0.35, 0.03, 245.30)
+val DarkDivider = oklch(0.29, 0.02, 305.84)
+val DarkDisabled = oklch(0.29, 0.01, 131.57)
+val DarkTextPrimary = oklch(0.83, 0.03, 249.81)
+val DarkTextSecondary = oklch(0.83, 0.03, 249.81, 0.72f)
+val DarkAccent = oklch(0.36, 0.03, 303.92)
+val DarkAccentText = oklch(0.83, 0.04, 307.99)
+val DarkAccentLight = oklch(0.83, 0.04, 307.99)
+val DarkTagBackground = oklch(0.27, 0.04, 303.36)
+val DarkAlert = oklch(0.42, 0.05, 20.0)
+val DarkQrModule = oklch(0.26, 0.03, 243.97)
+val DarkQrBackground = oklch(0.83, 0.03, 249.81)

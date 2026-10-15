@@ -1,0 +1,956 @@
+{
+  "format": 1,
+  "contentVersion": "2026.10",
+  "packDate": "2026-10-14",
+  "signature": "DEV_SEED",
+  "countries": [
+    {
+      "id": "ie",
+      "code": "IE",
+      "nameRu": "Ирландия",
+      "nameLocal": "Éire",
+      "flagEmoji": "🇮🇪",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 1
+    },
+    {
+      "id": "de",
+      "code": "DE",
+      "nameRu": "Германия",
+      "nameLocal": "Deutschland",
+      "flagEmoji": "🇩🇪",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 2
+    },
+    {
+      "id": "nl",
+      "code": "NL",
+      "nameRu": "Нидерланды",
+      "nameLocal": "Nederland",
+      "flagEmoji": "🇳🇱",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 3
+    },
+    {
+      "id": "be",
+      "code": "BE",
+      "nameRu": "Бельгия",
+      "nameLocal": "België",
+      "flagEmoji": "🇧🇪",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 4
+    },
+    {
+      "id": "lu",
+      "code": "LU",
+      "nameRu": "Люксембург",
+      "nameLocal": "Lëtzebuerg",
+      "flagEmoji": "🇱🇺",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 5
+    },
+    {
+      "id": "fi",
+      "code": "FI",
+      "nameRu": "Финляндия",
+      "nameLocal": "Suomi",
+      "flagEmoji": "🇫🇮",
+      "currencyCode": "EUR",
+      "currencySymbol": "€",
+      "sortOrder": 6
+    },
+    {
+      "id": "no",
+      "code": "NO",
+      "nameRu": "Норвегия",
+      "nameLocal": "Norge",
+      "flagEmoji": "🇳🇴",
+      "currencyCode": "NOK",
+      "currencySymbol": "kr",
+      "sortOrder": 7
+    }
+  ],
+  "sources": [
+    {
+      "id": "src.revenue_ie",
+      "orgName": "Revenue Commissioners (Ирландия)",
+      "urlText": "revenue.ie",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.gov_ie",
+      "orgName": "Правительство Ирландии (gov.ie)",
+      "urlText": "gov.ie",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.rtb_ie",
+      "orgName": "Residential Tenancies Board (RTB)",
+      "urlText": "rtb.ie",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.wrc_ie",
+      "orgName": "Workplace Relations Commission (WRC)",
+      "urlText": "workplacerelations.ie",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.citizens_info",
+      "orgName": "Citizens Information Board",
+      "urlText": "citizensinformation.ie",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.de_bmas",
+      "orgName": "BMAS (Германия)",
+      "urlText": "bmas.de",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.nl_gov",
+      "orgName": "Rijksoverheid (Нидерланды)",
+      "urlText": "rijksoverheid.nl",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.be_emploi",
+      "orgName": "SPF Emploi (Бельгия)",
+      "urlText": "emploi.belgique.be",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.lu_itm",
+      "orgName": "Inspection du Travail et des Mines (Люксембург)",
+      "urlText": "itm.public.lu",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.fi_vero",
+      "orgName": "Vero Skatt (Финляндия)",
+      "urlText": "vero.fi",
+      "checkedAt": "2026-10-14"
+    },
+    {
+      "id": "src.no_skatt",
+      "orgName": "Skatteetaten (Норвегия)",
+      "urlText": "skatteetaten.no",
+      "checkedAt": "2026-10-14"
+    }
+  ],
+  "rates": [
+    {
+      "id": "ie.min_wage_adult_2026",
+      "countryId": "ie",
+      "key": "ie.min_wage_adult",
+      "value": 14.15,
+      "unit": "EUR/h",
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.min_wage_adult_2027",
+      "countryId": "ie",
+      "key": "ie.min_wage_adult",
+      "value": 14.94,
+      "unit": "EUR/h",
+      "validFrom": "2027-01-01",
+      "sourceId": "src.gov_ie",
+      "status": "TO_VERIFY"
+    },
+    {
+      "id": "ie.min_wage_19",
+      "countryId": "ie",
+      "key": "ie.min_wage_19",
+      "value": 12.74,
+      "unit": "EUR/h",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.min_wage_18",
+      "countryId": "ie",
+      "key": "ie.min_wage_18",
+      "value": 11.32,
+      "unit": "EUR/h",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.min_wage_u18",
+      "countryId": "ie",
+      "key": "ie.min_wage_u18",
+      "value": 9.91,
+      "unit": "EUR/h",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.gem_mar_annual",
+      "countryId": "ie",
+      "key": "ie.gem_mar_annual",
+      "value": 36605.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-03-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.gem_graduate_annual",
+      "countryId": "ie",
+      "key": "ie.gem_graduate_annual",
+      "value": 34009.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-03-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.csep_annual",
+      "countryId": "ie",
+      "key": "ie.csep_annual",
+      "value": 40904.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-03-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.csep_graduate",
+      "countryId": "ie",
+      "key": "ie.csep_graduate",
+      "value": 36848.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-03-01",
+      "sourceId": "src.gov_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.gem_sub_standard",
+      "countryId": "ie",
+      "key": "ie.gem_sub_standard",
+      "value": 32691.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-03-01",
+      "sourceId": "src.gov_ie",
+      "status": "TO_VERIFY"
+    },
+    {
+      "id": "ie.it_band_single_2026",
+      "countryId": "ie",
+      "key": "ie.it_band_single",
+      "value": 44000.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.it_band_single_2027",
+      "countryId": "ie",
+      "key": "ie.it_band_single",
+      "value": 46500.0,
+      "unit": "EUR/year",
+      "validFrom": "2027-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.credit_personal_single",
+      "countryId": "ie",
+      "key": "ie.credit_personal_single",
+      "value": 2000.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.credit_employee",
+      "countryId": "ie",
+      "key": "ie.credit_employee",
+      "value": 2000.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.usc_exempt_income",
+      "countryId": "ie",
+      "key": "ie.usc_exempt_income",
+      "value": 13000.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.usc_band1_ceiling",
+      "countryId": "ie",
+      "key": "ie.usc_band1_ceiling",
+      "value": 12012.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.usc_band2_ceiling_2026",
+      "countryId": "ie",
+      "key": "ie.usc_band2_ceiling",
+      "value": 28700.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.usc_band2_ceiling_2027",
+      "countryId": "ie",
+      "key": "ie.usc_band2_ceiling",
+      "value": 30300.0,
+      "unit": "EUR/year",
+      "validFrom": "2027-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.usc_band3_ceiling",
+      "countryId": "ie",
+      "key": "ie.usc_band3_ceiling",
+      "value": 70044.0,
+      "unit": "EUR/year",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.prsi_employee_2026",
+      "countryId": "ie",
+      "key": "ie.prsi_employee",
+      "value": 4.35,
+      "unit": "percent",
+      "validFrom": "2026-10-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.prsi_employee_2027",
+      "countryId": "ie",
+      "key": "ie.prsi_employee",
+      "value": 4.5,
+      "unit": "percent",
+      "validFrom": "2027-10-01",
+      "sourceId": "src.revenue_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.sick_days",
+      "countryId": "ie",
+      "key": "ie.sick_days",
+      "value": 5.0,
+      "unit": "days",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.wrc_ie",
+      "status": "TO_VERIFY"
+    },
+    {
+      "id": "ie.annual_leave_weeks",
+      "countryId": "ie",
+      "key": "ie.annual_leave_weeks",
+      "value": 4.0,
+      "unit": "weeks",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.wrc_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.deposit_max_months",
+      "countryId": "ie",
+      "key": "ie.deposit_max_months",
+      "value": 1.0,
+      "unit": "months",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.rtb_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.advance_max_months",
+      "countryId": "ie",
+      "key": "ie.advance_max_months",
+      "value": 1.0,
+      "unit": "months",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.rtb_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "ie.wrc_months",
+      "countryId": "ie",
+      "key": "ie.wrc_months",
+      "value": 6.0,
+      "unit": "months",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.wrc_ie",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "de.min_wage_2026",
+      "countryId": "de",
+      "key": "de.min_wage",
+      "value": 13.9,
+      "unit": "EUR/h",
+      "validFrom": "2026-01-01",
+      "sourceId": "src.de_bmas",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "de.min_wage_2027",
+      "countryId": "de",
+      "key": "de.min_wage",
+      "value": 14.6,
+      "unit": "EUR/h",
+      "validFrom": "2027-01-01",
+      "sourceId": "src.de_bmas",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "nl.min_wage_21_2026",
+      "countryId": "nl",
+      "key": "nl.min_wage_21",
+      "value": 14.99,
+      "unit": "EUR/h",
+      "validFrom": "2026-07-01",
+      "sourceId": "src.nl_gov",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "be.rmmmg_monthly_38h",
+      "countryId": "be",
+      "key": "be.rmmmg_monthly_38h",
+      "value": 2233.61,
+      "unit": "EUR/month",
+      "validFrom": "2026-07-01",
+      "sourceId": "src.be_emploi",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "lu.ssm_unskilled_monthly_40h",
+      "countryId": "lu",
+      "key": "lu.ssm_unskilled_monthly_40h",
+      "value": 2771.33,
+      "unit": "EUR/month",
+      "validFrom": "2026-06-01",
+      "sourceId": "src.lu_itm",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "lu.ssm_skilled_monthly",
+      "countryId": "lu",
+      "key": "lu.ssm_skilled_monthly",
+      "value": 3325.59,
+      "unit": "EUR/month",
+      "validFrom": "2026-06-01",
+      "sourceId": "src.lu_itm",
+      "status": "VERIFIED"
+    }
+  ],
+  "sections": [
+    {
+      "id": "ie.status",
+      "countryId": "ie",
+      "slug": "status",
+      "titleRu": "Статус и разрешения",
+      "iconKey": "badge",
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.work",
+      "countryId": "ie",
+      "slug": "work",
+      "titleRu": "Работа и права",
+      "iconKey": "work",
+      "sortOrder": 2
+    },
+    {
+      "id": "ie.tax",
+      "countryId": "ie",
+      "slug": "tax",
+      "titleRu": "Налоги и зарплата",
+      "iconKey": "payments",
+      "sortOrder": 3
+    },
+    {
+      "id": "ie.housing",
+      "countryId": "ie",
+      "slug": "housing",
+      "titleRu": "Жильё и аренда",
+      "iconKey": "home",
+      "sortOrder": 4
+    },
+    {
+      "id": "ie.health",
+      "countryId": "ie",
+      "slug": "health",
+      "titleRu": "Здоровье и медицина",
+      "iconKey": "health_and_safety",
+      "sortOrder": 5
+    },
+    {
+      "id": "de.general",
+      "countryId": "de",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Германии",
+      "iconKey": "flag",
+      "sortOrder": 1
+    },
+    {
+      "id": "nl.general",
+      "countryId": "nl",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Нидерландах",
+      "iconKey": "flag",
+      "sortOrder": 1
+    },
+    {
+      "id": "be.general",
+      "countryId": "be",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Бельгии",
+      "iconKey": "flag",
+      "sortOrder": 1
+    },
+    {
+      "id": "lu.general",
+      "countryId": "lu",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Люксембурге",
+      "iconKey": "flag",
+      "sortOrder": 1
+    },
+    {
+      "id": "fi.general",
+      "countryId": "fi",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Финляндии",
+      "iconKey": "flag",
+      "sortOrder": 1
+    },
+    {
+      "id": "no.general",
+      "countryId": "no",
+      "slug": "general",
+      "titleRu": "Переезд и работа в Норвегии",
+      "iconKey": "flag",
+      "sortOrder": 1
+    }
+  ],
+  "articles": [
+    {
+      "id": "ie.fact_card",
+      "countryId": "ie",
+      "sectionId": null,
+      "kind": "FACT_CARD",
+      "titleRu": "Ключевые цифры Ирландии",
+      "subtitle": "Минимальная ставка, налоги, рабочий номер",
+      "bodyMd": "### Ключевые параметры Ирландии (2026/2027)\n\n- **Валюта:** EUR (€)\n- **Минимальная оплата труда:** 14.15 €/ч (2026), 14.94 €/ч с 01.01.2027 [TO_VERIFY]\n- **Рабочий налоговый номер:** PPS Number (Personal Public Service)\n- **Налоговая служба:** Revenue (myAccount на revenue.ie)\n- **Трудовая инспекция:** WRC (workplacerelations.ie)\n- **Регулятор аренды:** RTB (rtb.ie)\n- **Экстренная служба:** 112 или 999\n",
+      "keywords": "ирландия цифры минималка ставка pps revenue налог",
+      "applicableTo": "ANY",
+      "sourceIds": "src.gov_ie,src.revenue_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 0
+    },
+    {
+      "id": "ie.status.permits",
+      "countryId": "ie",
+      "sectionId": "ie.status",
+      "kind": "GUIDE",
+      "titleRu": "Статус пребывания и разрешения на работу",
+      "subtitle": "Правила для граждан ЕС, третьих стран и временной защиты",
+      "bodyMd": "# Статус пребывания и разрешения на работу\n\n### Граждане ЕС / ЕЭЗ / Швейцарии\n- Имеют право свободно проживать и работать в Ирландии без оформления отдельного разрешения на работу.\n- Требуется только получить номер PPS для официального налогообложения.\n\n### Граждане третьих стран (Non-EEA)\n- Минимальная зарплата **не даёт** основания для получения разрешения на работу.\n- **General Employment Permit:** минимальный годовой порог зарплаты составляет **36 605 €/год** (при 39 ч/неделю) с 01.03.2026. Для недавних выпускников вузов — **34 009 €/год**.\n- **Critical Skills Employment Permit:** от **40 904 €/год** (при наличии профильного диплома) либо от 64 000 € без диплома.\n- **Важно:** Ирландия **не входит в Шенгенскую зону**. Шенгенская виза здесь не действует. Для въезда гражданам РФ и многих других стран требуется национальная ирландская виза (Employment Visa).\n- Отдельной визы для удалённой работы («digital nomad») в Ирландии нет [TO_VERIFY].\n- При пребывании свыше 90 дней оформляется карта резидента **IRP** (Irish Residence Permit). Стоимость регистрации — 300 €.\n",
+      "keywords": "виза разрешение работа permit general critical skills irp шенген статус ес",
+      "applicableTo": "EU_EEA,THIRD_COUNTRY,TEMP_PROTECTION",
+      "sourceIds": "src.gov_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.work.rights",
+      "countryId": "ie",
+      "sectionId": "ie.work",
+      "kind": "GUIDE",
+      "titleRu": "Трудовые права, отпуск и оплата больничного",
+      "subtitle": "Минимальные ставки, отпуск 4 недели, оплата болезни",
+      "bodyMd": "# Трудовые права в Ирландии\n\n### Минимальная оплата труда\n- Взрослый работник (от 20 лет): {{rate:ie.min_wage_adult}} (14.15 €/ч в 2026 г., 14.94 €/ч с 2027 г. [TO_VERIFY]).\n- 19 лет: 12.74 €/ч; 18 лет: 11.32 €/ч; до 18 лет: 9.91 €/ч.\n- Формула расчёта в расчётном листке (payslip): часы × ставка = брутто до удержаний.\n\n### Рабочее время и отдых\n- Максимальная средняя продолжительность рабочей недели: **не более 48 часов**.\n- Ежедневный непрерывный отдых: **минимум 11 часов в сутки**.\n- Закон: *Organisation of Working Time Act 1997*.\n\n### Отпуск и праздники\n- Ежегодный оплачиваемый отпуск: **4 недели в году** (20 рабочих дней при 5-дневной неделе).\n- Официальные праздничные дни (Public Holidays): **10 дней в году**.\n\n### Больничный (Statutory Sick Pay)\n- Оплачивается работодателем: **5 дней в календарном году** [TO_VERIFY].\n- Требуется стаж работы у данного работодателя от 13 недель и медицинская справка (Medical Certificate) от врача.\n- Размер выплаты: **70% от обычной дневной ставки**, но не более **110 € в день**.\n- Свыше 5 дней: подача заявления на государственное пособие *Illness Benefit*.\n\n### Невыплата зарплаты и споры\n- Жалоба подаётся в комиссию **WRC** (workplacerelations.ie).\n- Срок подачи жалобы: **6 месяцев** со дня нарушения (может быть продлен до 12 месяцев при уважительной причине).\n",
+      "keywords": "права отпуск больничный wrc зарплата ставка часы отдых праздник sick pay",
+      "applicableTo": "ANY",
+      "sourceIds": "src.wrc_ie,src.gov_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.tax.overview",
+      "countryId": "ie",
+      "sectionId": "ie.tax",
+      "kind": "GUIDE",
+      "titleRu": "Налоги и удержания с зарплаты (PAYE, USC, PRSI)",
+      "subtitle": "Структура налогообложения, кредиты и бюджет 2027",
+      "bodyMd": "# Налогообложение в Ирландии\n\nС заработной платы производятся три основных удержания:\n1. **PAYE (Pay As You Earn)** — подоходный налог.\n2. **USC (Universal Social Charge)** — универсальный социальный сбор.\n3. **PRSI (Pay Related Social Insurance)** — социальное страхование.\n\n### Бюджетные параметры (2026 и 2027)\n- **Подоходный налог (PAYE):**\n  - Стандартная ставка **20%** до порога (44 000 € в 2026 г., 46 500 € с 2027 г. для одиноких).\n  - Повышенная ставка **40%** с суммы превышения.\n  - Налоговые кредиты (вычитаются напрямую из налога): Personal Tax Credit + Employee Tax Credit (по 2 000 € в 2026 г., по 2 125 € в 2027 г.). Итого кредиты снижают налог на 4 000 € / 4 250 € в год.\n\n- **USC (социальный сбор):**\n  - При общем доходе **до 13 000 € в год USC не взимается**.\n  - Если доход превышает 13 000 €, сбор считается со всей суммы по ступеням:\n    - 0.5% на первые 12 012 €\n    - 2.0% на интервал от 12 012 € до 28 700 € (в 2027 г. до 30 300 €)\n    - 3.0% на интервал до 70 044 €\n    - 8.0% на доход свыше 70 044 €\n\n- **PRSI (соцстрахование работника):**\n  - Ставка: 4.35% (до октября 2027 г.), затем 4.50%.\n  - При недельном доходе до 352 € сбор равен 0 €.\n  - При доходе 352–424 € в неделю предоставляется скидка (credit) до 12 € в неделю.\n\n### Важно: Emergency Tax\nЕсли вы не зарегистрировали номер PPS в Revenue myAccount и не привязали работодателя, к вам будет применена повышенная ставка налога (**Emergency Tax** — до 40% без налоговых кредитов). После регистрации переплаченный налог возвращается работодателем со следующим payslip.\n",
+      "keywords": "налоги paye usc prsi revenue emergency tax вычеты кредит ставка",
+      "applicableTo": "ANY",
+      "sourceIds": "src.revenue_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.housing.rental",
+      "countryId": "ie",
+      "sectionId": "ie.housing",
+      "kind": "GUIDE",
+      "titleRu": "Аренда жилья, депозит и регистрация RTB",
+      "subtitle": "Лимиты депозита, защита прав квартиранта, мошенники",
+      "bodyMd": "# Аренда жилья в Ирландии\n\n### Лимиты платежей при въезде\n- **Депозит:** не может превышать сумму **1 месяца аренды**.\n- **Аванс за аренду:** не более **1 месяца вперёд**.\n- Общая сумма при заселении: максимум 2 месяца (1 месяц депозит + 1 месяц аванс). Требование 3–4 месяцев сразу незаконно.\n\n### Регистрация в RTB (Residential Tenancies Board)\n- Арендодатель обязан зарегистрировать договор аренды в RTB в течение 1 месяца после начала аренды.\n- Проверить регистрацию можно самостоятельно на сайте **rtb.ie**.\n- Регистрация в RTB даёт квартиранту официальную защиту от незаконного выселения и право на налоговый вычет (Rent Tax Credit).\n- Споры о возврате депозита разрешаются через RTB Dispute Resolution Service.\n\n### Регулирование арендной платы\n- С 01.03.2026 рост аренды регулируется на национальном уровне на основе индекса потребительских цен (CPI), подробности на rtb.ie.\n\n### Признаки мошенничества при аренде\n1. Просят перевести депозит до физического просмотра жилья.\n2. «Арендодатель за границей и пришлёт ключи курьером или Airbnb».\n3. Просят оплату криптовалютой, Western Union или на частный зарубежный счёт.\n4. Отказываются подписывать письменный договор (Tenancy Agreement).\n",
+      "keywords": "жилье аренда депозит rtb договор мошенники tenancy eircode",
+      "applicableTo": "ANY",
+      "sourceIds": "src.rtb_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.health.guide",
+      "countryId": "ie",
+      "sectionId": "ie.health",
+      "kind": "GUIDE",
+      "titleRu": "Здравоохранение: семейный врач (GP) и экстренная помощь",
+      "subtitle": "Регистрация у GP, внеурочные службы и скорая помощь",
+      "bodyMd": "# Здравоохранение в Ирландии\n\n### Семейный врач (GP - General Practitioner)\n- Основная точка входа в систему здравоохранения. Записаться к врачу в клинику необходимо сразу после переезда.\n- Приём терапевта в частном порядке стоит обычно 50–70 €.\n- При невысоком доходе можно подать заявку на **Medical Card** или **GP Visit Card** (бесплатное обслуживание у GP) на сайте HSE [TO_VERIFY].\n\n### Внеурочный врач (Out of Hours GP)\n- Если помощь врача требуется вечером, ночью или в выходные дни — звоните на номер своего GP. На автоответчике всегда указан контакт дежурной региональной службы внеурочной помощи (HSE Out of Hours).\n\n### Экстренные ситуации и травмы\n- Номер единой службы спасения: **112** или **999** (бесплатно, работает без SIM-карты).\n- Отделение неотложной помощи при больнице называется **A&E (Accident & Emergency)**.\n\n### Аптеки и лекарства\n- Антибиотики и большинство специализированных препаратов отпускаются строго по рецепту (Prescription).\n- Программа **Drugs Payment Scheme (DPS)** ограничивает максимальные ежемесячные семейные расходы на рецептурные лекарства (свыше лимита оплачивает государство, требуется карта DPS) [TO_VERIFY].\n",
+      "keywords": "здоровье gp врач поликлиника hse 112 999 аптека рецепт больница",
+      "applicableTo": "ANY",
+      "sourceIds": "src.gov_ie",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "de.fact_card",
+      "countryId": "de",
+      "sectionId": "de.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Германия: ключевые факты и регистрация",
+      "subtitle": "Минималка 13.90/14.60 €/ч, прописка Anmeldung, Steuer-ID",
+      "bodyMd": "### Германия: Ключевые факты\n\n- **Минимальная оплата:** 13.90 €/ч (2026), 14.60 €/ч с 01.01.2027.\n- **Главный шаг по приезде:** Регистрация по месту жительства (**Anmeldung**) в Bürgeramt. Без неё невозможно открыть счёт и получить постоянный налоговый класс.\n- **Налоговый идентификатор:** Steuer-ID (приходит по почте после Anmeldung).\n- **Медицинское страхование:** Обязательно с первого дня (государственная Krankenkasse — TK, AOK, Barmer или частная PKV).\n",
+      "keywords": "германия anmeldung steuerid bürgeramt krankenkasse минималка",
+      "applicableTo": "ANY",
+      "sourceIds": "src.de_bmas",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "nl.fact_card",
+      "countryId": "nl",
+      "sectionId": "nl.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Нидерланды: BSN и почасовая ставка",
+      "subtitle": "Минималка 14.99 €/ч, номер BSN, муниципалитет",
+      "bodyMd": "### Нидерланды: Ключевые факты\n\n- **Минимальная оплата:** 14.99 €/ч (для работников от 21 года) с 01.07.2026. Месячной минимальной ставки нет, законодательно зафиксирована только почасовая.\n- **Главный шаг:** Регистрация в местном муниципалитете (Gemeente) и получение номера **BSN (Burgerservicenummer)**.\n- **Медстраховка:** Базовая медицинская страховка (Basisverzekering) обязательна для каждого резидента.\n",
+      "keywords": "нидерланды bsn gemeente минималка голландия",
+      "applicableTo": "ANY",
+      "sourceIds": "src.nl_gov",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "be.fact_card",
+      "countryId": "be",
+      "sectionId": "be.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Бельгия: минимальная зарплата и коммуна",
+      "subtitle": "Месячный оклад 2 233.61 € брутто (38ч), регистрация",
+      "bodyMd": "### Бельгия: Ключевые факты\n\n- **Минимальная зарплата (RMMMG):** 2 233.61 € брутто в месяц при полной занятости (38 часов в неделю) с 01.07.2026.\n- **Главный шаг:** Регистрация в местной администрации (Commune / Gemeente) по приезде, визит участкового инспектора полиции для подтверждения адреса, затем выдача национального регистрационного номера.\n",
+      "keywords": "бельгия rmmmg коммуна брюссель минималка",
+      "applicableTo": "ANY",
+      "sourceIds": "src.be_emploi",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "lu.fact_card",
+      "countryId": "lu",
+      "sectionId": "lu.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Люксембург: социальный минимум",
+      "subtitle": "Неквалифицированный 2 771.33 €, квалифицированный 3 325.59 €",
+      "bodyMd": "### Люксембург: Ключевые факты\n\n- **Минимальная оплата (SSM, 40 ч/нед):**\n  - Неквалифицированный работник: 2 771.33 € брутто/мес (с 01.06.2026).\n  - Квалифицированный специалист: 3 325.59 € брутто/мес.\n- **Регистрация:** Декларация о прибытии в коммуне, получение 13-значного матрикула (matricule).\n- **Страхование:** Регистрация в CNS (Caisse Nationale de Santé).\n",
+      "keywords": "люксембург ssm matricule cns зарплата",
+      "applicableTo": "ANY",
+      "sourceIds": "src.lu_itm",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "fi.fact_card",
+      "countryId": "fi",
+      "sectionId": "fi.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Финляндия: коллективные договоры (TES) и Vero",
+      "subtitle": "Законной минималки нет, henkilötunnus в DVV, карта Vero",
+      "bodyMd": "### Финляндия: Ключевые факты\n\n- **Минимальная оплата:** Законодательно фиксированной единой минималки нет. Минимальные ставки устанавливаются отраслевыми коллективными договорами (**TES - työehtosopimus**).\n- **Идентификатор:** Персональный код (henkilötunnus) в агентстве DVV.\n- **Налоги:** Налоговая карта (**verokortti**) оформляется в налоговой службе Vero.\n",
+      "keywords": "финляндия tes vero henkilötunnus dvv суоми",
+      "applicableTo": "ANY",
+      "sourceIds": "src.fi_vero",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "no.fact_card",
+      "countryId": "no",
+      "sectionId": "no.general",
+      "kind": "FACT_CARD",
+      "titleRu": "Норвегия: D-номер и налоговая карта",
+      "subtitle": "Ставки по отраслям (allmenngjøring), Skatteetaten",
+      "bodyMd": "### Норвегия: Ключевые факты\n\n- **Минимальная оплата:** Единой государственной минималки нет; в 9 отраслях (строительство, клининг, рыбопереработка, транспорт) действуют общеобязательные тарифные ставки (*allmenngjorte tariffavtaler*).\n- **Идентификатор:** Для временного пребывания (< 6 мес) выдаётся **D-nummer** в налоговой службе Skatteetaten, для постоянного — fødselsnummer.\n- **Налоговая карта:** *Skattekort* заказывается онлайн в Skatteetaten.\n",
+      "keywords": "норвегия dnummer skattekort skatteetaten норвежская крона",
+      "applicableTo": "ANY",
+      "sourceIds": "src.no_skatt",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 1
+    },
+    {
+      "id": "global.phrases",
+      "countryId": null,
+      "sectionId": null,
+      "kind": "PHRASE_SET",
+      "titleRu": "Разговорник для работы и жизни за границей",
+      "subtitle": "Фразы для работы, жилья, врача, полиции с транскрипцией",
+      "bodyMd": "# Разговорник (Фразы для ключевых ситуаций)\n\n### Работа и трудоустройство\n1. **Could you please provide a written contract?**\n   - *Куд ю плиз провайд э ритн контракт?*\n   - Можете ли вы предоставить письменный договор?\n2. **When will I receive my first payslip?**\n   - *Вэн уил ай рисив май фёрст пэйслип?*\n   - Когда я получу свой первый расчетный листок?\n3. **I would like to request annual leave from [date] to [date].**\n   - *Ай вуд лайк ту риквест эньюал лив фром... ту...*\n   - Я хотел бы запросить отпуск с [дата] по [дата].\n4. **I am unwell today and cannot come to work. I will visit a GP.**\n   - *Ай эм анвэл тудэй энд кэннот кам ту вёрк. Ай уил визит э джи-пи.*\n   - Я заболел и не смогу выйти на работу. Я пойду к врачу.\n\n### Аренда и жилье\n1. **Is the property registered with the RTB?**\n   - *Из зэ проперти реджистэрд уиз зэ ар-ти-би?*\n   - Зарегистрировано ли жильё в совете по аренде (RTB)?\n2. **May I have a receipt for the deposit payment?**\n   - *Мэй ай хэв э рисит фор зэ депозит пэймент?*\n   - Могу ли я получить квитанцию об оплате депозита?\n3. **There is an issue with the heating. Could you send a technician?**\n   - *Зэр из эн ишью уиз зэ хитинг. Куд ю сэнд э тэкнишен?*\n   - Возникла проблема с отоплением. Не могли бы вы прислать мастера?\n\n### Полиция и экстренные службы\n1. **I need help. Please call the emergency services.**\n   - *Ай нид хэлп. Плиз кол зэ имёрдженси сёрвисиз.*\n   - Мне нужна помощь. Пожалуйста, вызовите службу спасения.\n2. **I need an interpreter. I speak Russian.**\n   - *Ай нид эн интёрпретер. Ай спик рашн.*\n   - Мне нужен переводчик. Я говорю по-русски.\n3. **I do not understand what this document says. I cannot sign it.**\n   - *Ай ду нот андёрстэнд уот зис докьюмент сэз. Ай кэннот сайн ит.*\n   - Я не понимаю содержание этого документа. Я не могу его подписать.\n4. **Please call an ambulance.**\n   - *Плиз кол эн эмбьюланс.*\n   - Пожалуйста, вызовите скорую помощь.\n\n### Медицина и аптека\n1. **I would like to register with this GP surgery.**\n   - *Ай вуд лайк ту реджистэр уиз зис джи-пи сёрджери.*\n   - Я хотел бы встать на учёт в этой поликлинике.\n2. **I have a prescription from my doctor.**\n   - *Ай хэв э прискрипшн фром май доктор.*\n   - У меня рецепт от врача.\n",
+      "keywords": "разговорник фразы английский перевод транскрипция работа врач полиция аренда",
+      "applicableTo": "ANY",
+      "sourceIds": "src.citizens_info",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 2
+    },
+    {
+      "id": "global.glossary",
+      "countryId": null,
+      "sectionId": null,
+      "kind": "GLOSSARY",
+      "titleRu": "Словарь терминов и аббревиатур (30+ понятий)",
+      "subtitle": "PPS, Eircode, PAYE, USC, PRSI, BSN, Anmeldung, RTB, WRC",
+      "bodyMd": "# Словарь ключевых терминов\n\n1. **PPS number (Personal Public Service):** Индивидуальный номер в Ирландии (7 цифр + 1-2 буквы), необходим для работы, уплаты налогов и получения госуслуг.\n2. **Eircode:** Уникальный почтовый индекс в Ирландии (формат: D02 X285), точно идентифицирующий конкретное здание или квартиру.\n3. **PAYE (Pay As You Earn):** Система подоходного налога, удерживаемого работодателем напрямую из зарплаты.\n4. **USC (Universal Social Charge):** Универсальный социальный сбор в Ирландии со ступенчатыми ставками.\n5. **PRSI (Pay Related Social Insurance):** Взносы государственного социального страхования, дающие право на пенсию, пособие по болезни и безработице.\n6. **Payslip:** Официальный расчётный листок с подробным указанием отработанных часов, брутто-зарплаты и всех удержаний.\n7. **Gross Pay:** Начисленная заработная плата до вычета налогов и страховых взносов.\n8. **Net Pay:** Фактическая сумма заработной платы «на руки» после всех удержаний.\n9. **Emergency Tax:** Повышенная ставка налога, временно применяемая до регистрации номера PPS у работодателя.\n10. **Tax Credit:** Налоговый кредит, напрямую уменьшающий рассчитанную сумму налога PAYE.\n11. **P45:** Исторический документ об увольнении; сейчас данные передаются работодателем в Revenue электронно.\n12. **Tenancy Agreement:** Письменный договор найма жилого помещения.\n13. **Deposit:** Обеспечительный платёж за жильё, возвращаемый при выезде при отсутствии повреждений (не более 1 месяца аренды).\n14. **Landlord:** Собственник жилья (арендодатель).\n15. **Letting Agent:** Агент по недвижимости, представляющий интересы арендодателя.\n16. **RTB (Residential Tenancies Board):** Государственный совет по аренде жилья в Ирландии, регистрирующий аренду и разрешающий споры.\n17. **Revenue:** Налоговая служба Ирландии (веб-портал myAccount).\n18. **WRC (Workplace Relations Commission):** Государственная комиссия по трудовым спорам и инспекция труда в Ирландии.\n19. **Garda (Garda Síochána):** Национальная полиция Ирландии.\n20. **GP (General Practitioner):** Семейный врач / участковый терапевт общей практики.\n21. **A&E (Accident & Emergency):** Отделение неотложной скорой помощи в больнице.\n22. **Medical Card:** Государственная карта бесплатного медобслуживания в Ирландии при низком доходе.\n23. **GP Visit Card:** Карта, дающая право на бесплатные посещения семейного врача.\n24. **Employment Permit:** Официальное государственное разрешение на работу для граждан стран, не входящих в ЕЭЗ.\n25. **IRP (Irish Residence Permit):** Пластиковая карта резидента Ирландии для граждан третьих стран, находящихся свыше 90 дней.\n26. **BSN (Burgerservicenummer):** Единый налоговый и идентификационный номер резидента в Нидерландах.\n27. **Anmeldung:** Обязательная регистрация по месту жительства в органах Bürgeramt в Германии.\n28. **Steuer-ID:** Индивидуальный налоговый номер налогоплательщика в Германии.\n29. **D-nummer:** Временный идентификационный номер для работы и налогообложения в Норвегии.\n30. **Skattekort:** Налоговая карта в Норвегии, определяющая размер налоговых удержаний.\n31. **DVV:** Агентство цифровых услуг и народонаселения в Финляндии, присваивающее henkilötunnus.\n32. **Europass:** Общеевропейский стандартизированный формат резюме и портфолио навыков.\n",
+      "keywords": "словарь термины pps eircode paye usc prsi rtb wrc bsn anmeldung steuerid",
+      "applicableTo": "ANY",
+      "sourceIds": "src.citizens_info",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 3
+    },
+    {
+      "id": "global.templates",
+      "countryId": null,
+      "sectionId": null,
+      "kind": "TEMPLATE",
+      "titleRu": "Шаблоны официальных писем и заявлений",
+      "subtitle": "Запрос условий работы, возврат депозита, payslip, жалоба",
+      "bodyMd": "# Шаблоны писем\n\nПоля в двойных фигурных скобках  автоматически заполняются из вашего локального профиля.\n\n---\n\n### 1. Запрос письменного описания условий работы\n\n\n---\n\n### 2. Запрос разъяснения удержаний в расчётном листке (Payslip)\n\n\n---\n\n### 3. Запрос полного возврата депозита за аренду\n\n",
+      "keywords": "шаблоны писем заявление контракт депозит payslip аренда работодатель",
+      "applicableTo": "ANY",
+      "sourceIds": "src.citizens_info",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 4
+    },
+    {
+      "id": "global.situations",
+      "countryId": null,
+      "sectionId": null,
+      "kind": "SITUATION",
+      "titleRu": "Сценарии: «Что делать, если...»",
+      "subtitle": "Невыплата зарплаты, потеря паспорта, задержание, ДТП",
+      "bodyMd": "# Порядок действий в критических ситуациях\n\n### 1. Что делать, если не выплатили зарплату\n1. **Соберите доказательства:** трудовой договор, табели учёта часов, расчётные листки, переписку и выписки со счёта.\n2. **Письменное обращение:** отправьте официальное требование работодателю (см. раздел «Шаблоны») с указанием срока ответа (7 дней).\n3. **Жалоба в инспекцию:** если выплаты нет, подайте жалобу в **WRC (workplacerelations.ie)** по закону *Payment of Wages Act 1991*. Срок подачи — **6 месяцев**.\n\n### 2. Что делать, если потеряли загранпаспорт\n1. Немедленно обратитесь в ближайший участок полиции (**Garda Station** в Ирландии) и получите справку о происшествии (Police Report).\n2. Обратитесь в консульство своей страны для оформления свидетельства на возвращение (СНВ) или нового паспорта.\n3. Сообщите в иммиграционную службу для переноса визовых отметок и карты резидента.\n\n### 3. Что делать, если задержала полиция\n1. Сохраняйте спокойствие, не оказывайте сопротивления.\n2. **Право на адвоката:** вы имеете законное право на бесплатную консультацию с дежурным адвокатом (Legal Aid).\n3. **Право на переводчика:** четко заявите: *«I need an interpreter. I speak Russian»*.\n4. **Ничего не подписывайте**, если текст не переведён и вам непонятен смысл.\n5. Вы имеете право на один телефонный звонок доверенному лицу или в консульство.\n\n### 4. Что делать при дорожно-транспортном происшествии (ДТП)\n1. Включите аварийную сигнализацию и убедитесь в безопасности. При наличии пострадавших немедленно наберите **112**.\n2. Не покидайте место аварии.\n3. Зафиксируйте: номерной знак, марку автомобиля, данные водителя (имя, телефон, страховая компания и номер полиса).\n4. Сделайте фотоснимки положения автомобилей и повреждений со всех сторон.\n",
+      "keywords": "ситуации полиция авария дтп паспорт потеря невыплата зарплата помощь",
+      "applicableTo": "ANY",
+      "sourceIds": "src.citizens_info",
+      "verifiedAt": "2026-10-14",
+      "status": "VERIFIED",
+      "archived": 0,
+      "sortOrder": 5
+    }
+  ],
+  "checklists": [
+    {
+      "id": "ie.w1",
+      "countryId": "ie",
+      "titleRu": "Первые 7 дней в Ирландии",
+      "applicableTo": "ANY",
+      "sortOrder": 1
+    },
+    {
+      "id": "docs.work",
+      "countryId": null,
+      "titleRu": "Пакет документов для трудоустройства",
+      "applicableTo": "ANY",
+      "sortOrder": 2
+    },
+    {
+      "id": "docs.rent",
+      "countryId": null,
+      "titleRu": "Пакет документов для аренды жилья",
+      "applicableTo": "ANY",
+      "sortOrder": 3
+    }
+  ],
+  "checklistItems": [
+    {
+      "id": "ie.w1.address",
+      "checklistId": "ie.w1",
+      "textRu": "Подтвердить адрес проживания и узнать Eircode дома",
+      "textLocal": "Proof of Address & Eircode",
+      "sortOrder": 1
+    },
+    {
+      "id": "ie.w1.pps",
+      "checklistId": "ie.w1",
+      "textRu": "Подать заявку на получение номера PPS (через MyWelfare или личный визит с письмом от работодателя)",
+      "textLocal": "PPS Number Application",
+      "sortOrder": 2
+    },
+    {
+      "id": "ie.w1.revenue",
+      "checklistId": "ie.w1",
+      "textRu": "Зарегистрироваться на портале Revenue myAccount для предотвращения Emergency Tax",
+      "textLocal": "Revenue myAccount Registration",
+      "sortOrder": 3
+    },
+    {
+      "id": "ie.w1.employer",
+      "checklistId": "ie.w1",
+      "textRu": "Передать PPS работодателю и проверить получение Tax Credit Certificate",
+      "textLocal": "Provide PPS to Employer",
+      "sortOrder": 4
+    },
+    {
+      "id": "ie.w1.sim",
+      "checklistId": "ie.w1",
+      "textRu": "Купить местную SIM-карту (Three, Vodafone, Eir или 48)",
+      "textLocal": "Local SIM Card",
+      "sortOrder": 5
+    },
+    {
+      "id": "ie.w1.bank",
+      "checklistId": "ie.w1",
+      "textRu": "Открыть расчётный счёт в банке (AIB, BOI или Revolut/N26 с ирландским IBAN)",
+      "textLocal": "Irish Bank Account",
+      "sortOrder": 6
+    },
+    {
+      "id": "ie.w1.gp",
+      "checklistId": "ie.w1",
+      "textRu": "Зарегистрироваться у ближайшего семейного врача (GP surgery)",
+      "textLocal": "Register with a local GP",
+      "sortOrder": 7
+    },
+    {
+      "id": "ie.w1.terms",
+      "checklistId": "ie.w1",
+      "textRu": "Запросить у работодателя письменное описание условий работы (Statement of Terms)",
+      "textLocal": "Terms of Employment Statement",
+      "sortOrder": 8
+    },
+    {
+      "id": "ie.w1.payslips",
+      "checklistId": "ie.w1",
+      "textRu": "Сохранить первый расчётный листок (payslip) и сверить удержанные налоги",
+      "textLocal": "Check & Store First Payslip",
+      "sortOrder": 9
+    },
+    {
+      "id": "docs.work.passport",
+      "checklistId": "docs.work",
+      "textRu": "Загранпаспорт (действительный не менее 6 месяцев)",
+      "textLocal": "Valid Passport",
+      "sortOrder": 1
+    },
+    {
+      "id": "docs.work.permit",
+      "checklistId": "docs.work",
+      "textRu": "Разрешение на работу (Employment Permit) или IRP карта",
+      "textLocal": "Employment Permit / IRP",
+      "sortOrder": 2
+    },
+    {
+      "id": "docs.work.contract",
+      "checklistId": "docs.work",
+      "textRu": "Подписанный трудовой договор (Job Offer / Contract)",
+      "textLocal": "Signed Employment Contract",
+      "sortOrder": 3
+    },
+    {
+      "id": "docs.work.iban",
+      "checklistId": "docs.work",
+      "textRu": "Справка с реквизитами банковского счёта (IBAN / BIC)",
+      "textLocal": "Bank Account Proof",
+      "sortOrder": 4
+    },
+    {
+      "id": "docs.rent.id",
+      "checklistId": "docs.rent",
+      "textRu": "Копия паспорта или ID-карты арендатора",
+      "textLocal": "Photo ID Copy",
+      "sortOrder": 1
+    },
+    {
+      "id": "docs.rent.income",
+      "checklistId": "docs.rent",
+      "textRu": "Подтверждение дохода (письмо от работодателя или выписка со счёта)",
+      "textLocal": "Proof of Income / Employment",
+      "sortOrder": 2
+    },
+    {
+      "id": "docs.rent.refs",
+      "checklistId": "docs.rent",
+      "textRu": "Рекомендательное письмо от предыдущего арендодателя (References)",
+      "textLocal": "Landlord Reference Letter",
+      "sortOrder": 3
+    }
+  ]
+}
