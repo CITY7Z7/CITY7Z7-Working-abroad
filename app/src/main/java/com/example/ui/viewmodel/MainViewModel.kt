@@ -103,6 +103,7 @@ class MainViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // --- Global Search ---
+    private var screenBeforeSearch: Selection? = null
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -110,13 +111,52 @@ class MainViewModel(
     val searchResults: StateFlow<SearchResults> = _searchResults.asStateFlow()
 
     fun updateSearchQuery(query: String) {
+        if (_searchQuery.value.isBlank() && query.isNotBlank() && _currentSelection.value !is Selection.Search) {
+            screenBeforeSearch = _currentSelection.value
+        }
         _searchQuery.value = query
         if (query.isBlank()) {
             _searchResults.value = SearchResults()
         } else {
+            select(Selection.Search(query))
             viewModelScope.launch {
                 _searchResults.value = repository.search(query)
             }
+        }
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _searchResults.value = SearchResults()
+        val target = screenBeforeSearch ?: Selection.NotesHub
+        screenBeforeSearch = null
+        select(target)
+    }
+
+    // --- Country Management ---
+    fun addCountry(
+        nameRu: String,
+        flagEmoji: String,
+        language: String,
+        currencyCode: String,
+        currencySymbol: String,
+        onDone: (CountryEntity) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val created = repository.addCountry(nameRu, flagEmoji, language, currencyCode, currencySymbol)
+            _selectedCountryId.value = created.id
+            select(Selection.Country(created.id))
+            onDone(created)
+        }
+    }
+
+    fun deleteCountry(countryId: String) {
+        viewModelScope.launch {
+            repository.deleteCountry(countryId)
+            if (_selectedCountryId.value == countryId) {
+                _selectedCountryId.value = "ie"
+            }
+            select(Selection.NotesHub)
         }
     }
 

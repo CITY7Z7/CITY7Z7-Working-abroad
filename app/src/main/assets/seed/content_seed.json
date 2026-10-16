@@ -1,7 +1,7 @@
 {
   "format": 1,
-  "contentVersion": "2026.10",
-  "packDate": "2026-10-14",
+  "contentVersion": "2026.11",
+  "packDate": "2026-10-16",
   "signature": "DEV_SEED",
   "countries": [
     {
@@ -13,66 +13,6 @@
       "currencyCode": "EUR",
       "currencySymbol": "€",
       "sortOrder": 1
-    },
-    {
-      "id": "de",
-      "code": "DE",
-      "nameRu": "Германия",
-      "nameLocal": "Deutschland",
-      "flagEmoji": "🇩🇪",
-      "currencyCode": "EUR",
-      "currencySymbol": "€",
-      "sortOrder": 2
-    },
-    {
-      "id": "nl",
-      "code": "NL",
-      "nameRu": "Нидерланды",
-      "nameLocal": "Nederland",
-      "flagEmoji": "🇳🇱",
-      "currencyCode": "EUR",
-      "currencySymbol": "€",
-      "sortOrder": 3
-    },
-    {
-      "id": "be",
-      "code": "BE",
-      "nameRu": "Бельгия",
-      "nameLocal": "België",
-      "flagEmoji": "🇧🇪",
-      "currencyCode": "EUR",
-      "currencySymbol": "€",
-      "sortOrder": 4
-    },
-    {
-      "id": "lu",
-      "code": "LU",
-      "nameRu": "Люксембург",
-      "nameLocal": "Lëtzebuerg",
-      "flagEmoji": "🇱🇺",
-      "currencyCode": "EUR",
-      "currencySymbol": "€",
-      "sortOrder": 5
-    },
-    {
-      "id": "fi",
-      "code": "FI",
-      "nameRu": "Финляндия",
-      "nameLocal": "Suomi",
-      "flagEmoji": "🇫🇮",
-      "currencyCode": "EUR",
-      "currencySymbol": "€",
-      "sortOrder": 6
-    },
-    {
-      "id": "no",
-      "code": "NO",
-      "nameRu": "Норвегия",
-      "nameLocal": "Norge",
-      "flagEmoji": "🇳🇴",
-      "currencyCode": "NOK",
-      "currencySymbol": "kr",
-      "sortOrder": 7
     }
   ],
   "sources": [
@@ -406,66 +346,6 @@
       "validFrom": "2026-01-01",
       "sourceId": "src.wrc_ie",
       "status": "VERIFIED"
-    },
-    {
-      "id": "de.min_wage_2026",
-      "countryId": "de",
-      "key": "de.min_wage",
-      "value": 13.9,
-      "unit": "EUR/h",
-      "validFrom": "2026-01-01",
-      "sourceId": "src.de_bmas",
-      "status": "VERIFIED"
-    },
-    {
-      "id": "de.min_wage_2027",
-      "countryId": "de",
-      "key": "de.min_wage",
-      "value": 14.6,
-      "unit": "EUR/h",
-      "validFrom": "2027-01-01",
-      "sourceId": "src.de_bmas",
-      "status": "VERIFIED"
-    },
-    {
-      "id": "nl.min_wage_21_2026",
-      "countryId": "nl",
-      "key": "nl.min_wage_21",
-      "value": 14.99,
-      "unit": "EUR/h",
-      "validFrom": "2026-07-01",
-      "sourceId": "src.nl_gov",
-      "status": "VERIFIED"
-    },
-    {
-      "id": "be.rmmmg_monthly_38h",
-      "countryId": "be",
-      "key": "be.rmmmg_monthly_38h",
-      "value": 2233.61,
-      "unit": "EUR/month",
-      "validFrom": "2026-07-01",
-      "sourceId": "src.be_emploi",
-      "status": "VERIFIED"
-    },
-    {
-      "id": "lu.ssm_unskilled_monthly_40h",
-      "countryId": "lu",
-      "key": "lu.ssm_unskilled_monthly_40h",
-      "value": 2771.33,
-      "unit": "EUR/month",
-      "validFrom": "2026-06-01",
-      "sourceId": "src.lu_itm",
-      "status": "VERIFIED"
-    },
-    {
-      "id": "lu.ssm_skilled_monthly",
-      "countryId": "lu",
-      "key": "lu.ssm_skilled_monthly",
-      "value": 3325.59,
-      "unit": "EUR/month",
-      "validFrom": "2026-06-01",
-      "sourceId": "src.lu_itm",
-      "status": "VERIFIED"
     }
   ],
   "sections": [
@@ -508,54 +388,6 @@
       "titleRu": "Здоровье и медицина",
       "iconKey": "health_and_safety",
       "sortOrder": 5
-    },
-    {
-      "id": "de.general",
-      "countryId": "de",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Германии",
-      "iconKey": "flag",
-      "sortOrder": 1
-    },
-    {
-      "id": "nl.general",
-      "countryId": "nl",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Нидерландах",
-      "iconKey": "flag",
-      "sortOrder": 1
-    },
-    {
-      "id": "be.general",
-      "countryId": "be",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Бельгии",
-      "iconKey": "flag",
-      "sortOrder": 1
-    },
-    {
-      "id": "lu.general",
-      "countryId": "lu",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Люксембурге",
-      "iconKey": "flag",
-      "sortOrder": 1
-    },
-    {
-      "id": "fi.general",
-      "countryId": "fi",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Финляндии",
-      "iconKey": "flag",
-      "sortOrder": 1
-    },
-    {
-      "id": "no.general",
-      "countryId": "no",
-      "slug": "general",
-      "titleRu": "Переезд и работа в Норвегии",
-      "iconKey": "flag",
-      "sortOrder": 1
     }
   ],
   "articles": [

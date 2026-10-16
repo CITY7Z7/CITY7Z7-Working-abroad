@@ -66,25 +66,15 @@ fun NotesHubScreen(
     modifier: Modifier = Modifier
 ) {
     val allNotes by repository.allNotes.collectAsState(initial = emptyList())
-    var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("ALL") } // "ALL", "PINNED", "LOCKED"
 
-    val filteredNotes = remember(allNotes, searchQuery, selectedFilter) {
+    val filteredNotes = remember(allNotes, selectedFilter) {
         allNotes.filter { note ->
-            val matchesSearch = if (searchQuery.isBlank()) {
-                true
-            } else {
-                note.title.contains(searchQuery, ignoreCase = true) ||
-                    (!note.isPrivate && note.body.contains(searchQuery, ignoreCase = true))
-            }
-
-            val matchesFilter = when (selectedFilter) {
+            when (selectedFilter) {
                 "PINNED" -> note.pinned
                 "LOCKED" -> note.isLocked
                 else -> true
             }
-
-            matchesSearch && matchesFilter
         }
     }
 
@@ -120,24 +110,6 @@ fun NotesHubScreen(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Search in Notes
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("notes_search_input"),
-                    placeholder = { Text("Поиск среди заметок...") },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = null)
-                    },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.small,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
 
                 // Filter Chips
                 Row(
@@ -185,13 +157,13 @@ fun NotesHubScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = if (searchQuery.isNotBlank()) "Ничего не найдено" else "Сборник заметок пока пуст",
+                                text = if (allNotes.isNotEmpty()) "Ничего не найдено по выбранному фильтру" else "Сборник заметок пока пуст",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (searchQuery.isNotBlank()) "Попробуйте изменить поисковый запрос" else "Нажмите «Создать заметку», чтобы сделать первую запись.",
+                                text = if (allNotes.isNotEmpty()) "Попробуйте переключить фильтр" else "Нажмите «Создать заметку», чтобы сделать первую запись.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

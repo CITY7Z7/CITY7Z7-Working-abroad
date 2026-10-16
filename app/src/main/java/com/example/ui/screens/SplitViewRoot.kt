@@ -213,7 +213,7 @@ private fun RenderContentPane(
         }
         is Selection.Tool -> {
             when (selection.kind) {
-                ToolKind.CALCULATOR -> CalculatorScreen(onBack = onBack)
+                ToolKind.CALCULATOR -> CalculatorScreen(repository = repository, onBack = onBack)
                 ToolKind.PHRASES -> SimpleArticleKindScreen("Разговорник", ArticleKind.PHRASE_SET, repository, onBack)
                 ToolKind.GLOSSARY -> SimpleArticleKindScreen("Словарь терминов", ArticleKind.GLOSSARY, repository, onBack)
                 ToolKind.TEMPLATES -> SimpleArticleKindScreen("Шаблоны писем", ArticleKind.TEMPLATE, repository, onBack)

@@ -23,14 +23,26 @@ import com.example.data.database.entity.RateEntity
 fun KeyFiguresCard(
     country: CountryEntity?,
     rates: List<RateEntity>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditRate: ((RateEntity) -> Unit)? = null
 ) {
     if (country == null) return
 
-    val minWageRate = rates.firstOrNull { it.key.contains("min_wage") }
-    val minWageText = if (minWageRate != null) {
-        val verifiedTag = if (minWageRate.status.name == "TO_VERIFY") " [уточнить]" else ""
-        "${minWageRate.value} €/ч$verifiedTag"
+    // Find the adult minimum wage (not youth rates 18/19/u18)
+    val adultWageRate = rates.firstOrNull { it.key == "${country.id}.min_wage_adult" && (it.validTo == null || it.validTo >= "2026-01-01") }
+        ?: rates.firstOrNull { it.key == "${country.id}.min_wage_adult" }
+        ?: rates.firstOrNull { it.key.contains("min_wage_adult") && it.validTo == null }
+        ?: rates.firstOrNull { it.key.contains("min_wage") && !it.key.contains("18") && !it.key.contains("19") && !it.key.contains("u18") }
+
+    val minWageText = if (adultWageRate != null && adultWageRate.value > 0.0) {
+        val verifiedSuffix = if (adultWageRate.status.name == "TO_VERIFY") {
+            " (предварительно)"
+        } else {
+            " (пров. ${adultWageRate.validFrom})"
+        }
+        "${adultWageRate.value} ${adultWageRate.unit}$verifiedSuffix"
+    } else if (adultWageRate != null) {
+        "Не задана"
     } else {
         "По коллективным договорам"
     }
@@ -39,10 +51,6 @@ fun KeyFiguresCard(
         "ie" -> "PPS Number"
         "de" -> "Steuer-ID / Anmeldung"
         "nl" -> "BSN (Burgerservicenummer)"
-        "be" -> "Numéro national (коммуна)"
-        "lu" -> "Matricule (коммуна / CNS)"
-        "fi" -> "Henkilötunnus (DVV)"
-        "no" -> "D-nummer / Fødselsnummer"
         else -> "Налоговый номер"
     }
 
@@ -50,10 +58,6 @@ fun KeyFiguresCard(
         "ie" -> "Revenue (revenue.ie)"
         "de" -> "Finanzamt (finanzamt.de)"
         "nl" -> "Belastingdienst (belastingdienst.nl)"
-        "be" -> "SPF Finances (finances.belgium.be)"
-        "lu" -> "ACD (impotsdirects.public.lu)"
-        "fi" -> "Vero (vero.fi)"
-        "no" -> "Skatteetaten (skatteetaten.no)"
         else -> "Налоговая служба"
     }
 

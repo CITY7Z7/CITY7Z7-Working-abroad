@@ -25,8 +25,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
@@ -43,6 +45,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,10 +61,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +76,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.database.entity.CountryEntity
 import com.example.data.database.entity.PersonProfileEntity
 import com.example.domain.expiry.ExpiryCalculator
 import com.example.domain.expiry.ExpiryUrgency
@@ -96,6 +102,16 @@ fun LeftNavigationPane(
     val searchQuery by mainViewModel.searchQuery.collectAsState()
 
     var isToolsExpanded by rememberSaveable { mutableStateOf(false) }
+    var isCountriesExpanded by rememberSaveable { mutableStateOf(false) }
+
+    var showAddCountryDialog by remember { mutableStateOf(false) }
+    var countryToDelete by remember { mutableStateOf<CountryEntity?>(null) }
+
+    var newCountryName by remember { mutableStateOf("") }
+    var newFlagEmoji by remember { mutableStateOf("🌐") }
+    var newLanguage by remember { mutableStateOf("") }
+    var newCurrencyCode by remember { mutableStateOf("EUR") }
+    var newCurrencySymbol by remember { mutableStateOf("€") }
 
     val selectedCountry = countries.firstOrNull { it.id == selectedCountryId }
 
@@ -111,9 +127,6 @@ fun LeftNavigationPane(
             value = searchQuery,
             onValueChange = { query ->
                 mainViewModel.updateSearchQuery(query)
-                if (query.isNotBlank()) {
-                    mainViewModel.select(Selection.Search(query))
-                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,6 +144,20 @@ fun LeftNavigationPane(
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
+            trailingIcon = if (searchQuery.isNotEmpty()) {
+                {
+                    IconButton(
+                        onClick = { mainViewModel.clearSearch() },
+                        modifier = Modifier.testTag("clear_search_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Очистить поиск",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else null,
             singleLine = true,
             shape = MaterialTheme.shapes.small,
             colors = OutlinedTextFieldDefaults.colors(
@@ -280,13 +307,16 @@ fun LeftNavigationPane(
                         .padding(start = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // 1. Калькулятор налогов
-                    NavigationItemRow(
-                        title = ToolKind.CALCULATOR.titleRu,
-                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.CALCULATOR,
-                        icon = Icons.Default.Calculate,
-                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.CALCULATOR)) }
-                    )
+                    // 1. Калькулятор налогов (только там, где есть ставки налогов)
+                    val hasTaxRates = selectedCountryId == "ie" || rates.any { it.key.contains("it_band") || it.key.contains("tax") }
+                    if (hasTaxRates) {
+                        NavigationItemRow(
+                            title = ToolKind.CALCULATOR.titleRu,
+                            isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.CALCULATOR,
+                            icon = Icons.Default.Calculate,
+                            onClick = { mainViewModel.select(Selection.Tool(ToolKind.CALCULATOR)) }
+                        )
+                    }
 
                     // 2. Разговорник
                     NavigationItemRow(
@@ -365,79 +395,187 @@ fun LeftNavigationPane(
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
             // ==========================================
-            // 3-й БЛОК: РАЗДЕЛЫ СТРАН
+            // 3-й БЛОК: СПРАВОЧНИКИ ПО СТРАНАМ (Сворачиваемая папка, по умолчанию свёрнута)
             // ==========================================
-            Text(
-                text = "🌍 СПРАВОЧНИКИ ПО СТРАНАМ",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            // Country Selector Chips
-            Row(
+            Surface(
+                onClick = { isCountriesExpanded = !isCountriesExpanded },
+                shape = MaterialTheme.shapes.small,
+                color = if (isCountriesExpanded) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else Color.Transparent,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    .testTag("countries_folder_toggle")
             ) {
-                countries.forEach { country ->
-                    val isSelected = country.id == selectedCountryId
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            mainViewModel.selectCountry(country.id)
-                            mainViewModel.select(Selection.Country(country.id))
-                        },
-                        label = {
-                            Text(
-                                text = "${country.flagEmoji} ${country.nameRu}",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 7.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isCountriesExpanded) Icons.Default.FolderOpen else Icons.Default.Folder,
+                            contentDescription = "Папка стран",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
                         )
-                    )
+                        Text(
+                            text = "🌍 СПРАВОЧНИКИ ПО СТРАНАМ",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = "${countries.size}",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                newCountryName = ""
+                                newFlagEmoji = "🌐"
+                                newLanguage = ""
+                                newCurrencyCode = "EUR"
+                                newCurrencySymbol = "€"
+                                showAddCountryDialog = true
+                            },
+                            modifier = Modifier.size(24.dp).testTag("add_country_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Добавить страну",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Icon(
+                            imageVector = if (isCountriesExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isCountriesExpanded) "Свернуть" else "Развернуть",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            // Key Figures Card
-            KeyFiguresCard(country = selectedCountry, rates = rates)
-
-            // Country Sections List
-            Text(
-                text = "Разделы: ${selectedCountry?.nameRu ?: ""}",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            sections.forEach { section ->
-                val isSelected = (currentSelection as? Selection.SectionArticles)?.sectionId == section.id
-                NavigationItemRow(
-                    title = section.titleRu,
-                    isSelected = isSelected,
-                    onClick = {
-                        mainViewModel.select(
-                            Selection.SectionArticles(
-                                countryId = selectedCountryId,
-                                sectionId = section.id,
-                                sectionTitle = section.titleRu
+            AnimatedVisibility(
+                visible = isCountriesExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Country Selector Chips
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        countries.forEach { country ->
+                            val isSelected = country.id == selectedCountryId
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    mainViewModel.selectCountry(country.id)
+                                    mainViewModel.select(Selection.Country(country.id))
+                                },
+                                label = {
+                                    Text(
+                                        text = "${country.flagEmoji} ${country.nameRu}",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                )
                             )
-                        )
+                        }
                     }
-                )
-            }
 
-            // Week 1 Progress (if Ireland)
-            if (selectedCountryId == "ie") {
-                Week1ProgressBlock(
-                    completed = week1Progress.first,
-                    total = week1Progress.second,
-                    onClick = { mainViewModel.select(Selection.Checklist("ie.w1")) }
-                )
+                    if (selectedCountry != null) {
+                        // Country Title & Action
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${selectedCountry.flagEmoji} ${selectedCountry.nameRu}",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            IconButton(
+                                onClick = { countryToDelete = selectedCountry },
+                                modifier = Modifier.size(26.dp).testTag("delete_country_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Удалить страну",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        // Key Figures Card
+                        KeyFiguresCard(country = selectedCountry, rates = rates)
+
+                        // 5 default sections
+                        Text(
+                            text = "Рубрики: ${selectedCountry.nameRu}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        sections.forEach { section ->
+                            val isSelected = (currentSelection as? Selection.SectionArticles)?.sectionId == section.id
+                            NavigationItemRow(
+                                title = section.titleRu,
+                                isSelected = isSelected,
+                                onClick = {
+                                    mainViewModel.select(
+                                        Selection.SectionArticles(
+                                            countryId = selectedCountryId,
+                                            sectionId = section.id,
+                                            sectionTitle = section.titleRu
+                                        )
+                                    )
+                                }
+                            )
+                        }
+
+                        // Week 1 Progress (if Ireland)
+                        if (selectedCountryId == "ie") {
+                            Week1ProgressBlock(
+                                completed = week1Progress.first,
+                                total = week1Progress.second,
+                                onClick = { mainViewModel.select(Selection.Checklist("ie.w1")) }
+                            )
+                        }
+                    }
+                }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
@@ -457,6 +595,108 @@ fun LeftNavigationPane(
                     onDocClick = { mainViewModel.select(Selection.Document(it.id)) }
                 )
             }
+        }
+
+        // Dialogs for Adding and Deleting Countries
+        if (showAddCountryDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddCountryDialog = false },
+                title = { Text("Добавить страну") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = newCountryName,
+                            onValueChange = { newCountryName = it },
+                            label = { Text("Название страны (напр. Польша)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth().testTag("new_country_name")
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = newFlagEmoji,
+                                onValueChange = { newFlagEmoji = it },
+                                label = { Text("Флаг") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f).testTag("new_country_flag")
+                            )
+                            OutlinedTextField(
+                                value = newLanguage,
+                                onValueChange = { newLanguage = it },
+                                label = { Text("Язык") },
+                                singleLine = true,
+                                modifier = Modifier.weight(2f).testTag("new_country_lang")
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = newCurrencyCode,
+                                onValueChange = { newCurrencyCode = it },
+                                label = { Text("Код (PLN)") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f).testTag("new_country_cur_code")
+                            )
+                            OutlinedTextField(
+                                value = newCurrencySymbol,
+                                onValueChange = { newCurrencySymbol = it },
+                                label = { Text("Символ (zł)") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f).testTag("new_country_cur_sym")
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (newCountryName.isNotBlank()) {
+                                mainViewModel.addCountry(
+                                    nameRu = newCountryName,
+                                    flagEmoji = newFlagEmoji,
+                                    language = newLanguage,
+                                    currencyCode = newCurrencyCode,
+                                    currencySymbol = newCurrencySymbol
+                                )
+                                isCountriesExpanded = true
+                                showAddCountryDialog = false
+                            }
+                        },
+                        modifier = Modifier.testTag("confirm_add_country")
+                    ) {
+                        Text("Создать")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddCountryDialog = false }) {
+                        Text("Отмена")
+                    }
+                }
+            )
+        }
+
+        val target = countryToDelete
+        if (target != null) {
+            AlertDialog(
+                onDismissRequest = { countryToDelete = null },
+                title = { Text("Удаление страны") },
+                text = { Text("Вы действительно хотите удалить страну «${target.nameRu} ${target.flagEmoji}» и все привязанные к ней статьи, рубрики и ставки? Это действие необратимо.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            mainViewModel.deleteCountry(target.id)
+                            countryToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.testTag("confirm_delete_country")
+                    ) {
+                        Text("Удалить")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { countryToDelete = null }) {
+                        Text("Отмена")
+                    }
+                }
+            )
         }
     }
 }

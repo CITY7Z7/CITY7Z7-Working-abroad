@@ -36,10 +36,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import com.example.data.repository.CityRepository
+import com.example.domain.calculator.IrishTaxRates
 import com.example.domain.calculator.NetCalculatorIE
 import com.example.domain.calculator.ReverseCalculator
 import com.example.domain.calculator.TaxBreakdown
 import com.example.ui.components.BreadcrumbsHeader
+import kotlinx.coroutines.flow.flowOf
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -47,29 +51,34 @@ import java.util.Locale
 @Composable
 fun CalculatorScreen(
     onBack: (() -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    repository: CityRepository? = null
 ) {
     var isReverseMode by remember { mutableStateOf(false) }
-    var selectedYear by remember { mutableIntStateOf(2027) }
+    var selectedYear by remember { mutableIntStateOf(2026) }
 
-    var hourlyRateInput by remember { mutableStateOf("14.94") }
+    var hourlyRateInput by remember { mutableStateOf("14.15") }
     var weeklyHoursInput by remember { mutableStateOf("39") }
     var targetNetMonthInput by remember { mutableStateOf("2200") }
+
+    val ieRates by (repository?.getRatesForCountry("ie") ?: flowOf(emptyList())).collectAsState(initial = emptyList())
+    val taxRates = remember(ieRates, selectedYear) {
+        IrishTaxRates.fromDatabase(ieRates, selectedYear)
+    }
 
     val df = remember { DecimalFormat("#,##0.00 €", DecimalFormatSymbols(Locale.GERMANY)) }
 
     val weeklyHours = weeklyHoursInput.toDoubleOrNull() ?: 39.0
 
-    val forwardBreakdown: TaxBreakdown = remember(hourlyRateInput, weeklyHoursInput, selectedYear) {
+    val forwardBreakdown: TaxBreakdown = remember(hourlyRateInput, weeklyHoursInput, selectedYear, taxRates) {
         val rate = hourlyRateInput.toDoubleOrNull() ?: 0.0
-        NetCalculatorIE.calculate(rate, weeklyHours, selectedYear)
+        NetCalculatorIE.calculate(rate, weeklyHours, selectedYear, taxRates)
     }
 
-    val reverseResult = remember(targetNetMonthInput, weeklyHoursInput, selectedYear) {
+    val reverseResult = remember(targetNetMonthInput, weeklyHoursInput, selectedYear, taxRates) {
         val targetMonth = targetNetMonthInput.toDoubleOrNull() ?: 0.0
         val targetYear = targetMonth * 12.0
-        val minWage = if (selectedYear >= 2027) 14.94 else 14.15
-        ReverseCalculator.findHourlyRateForNet(targetYear, weeklyHours, selectedYear, minWage)
+        ReverseCalculator.findHourlyRateForNet(targetYear, weeklyHours, selectedYear, taxRates.minWageAdult)
     }
 
     Column(
@@ -135,8 +144,27 @@ fun CalculatorScreen(
                                 selectedYear = 2027
                                 if (hourlyRateInput == "14.15") hourlyRateInput = "14.94"
                             },
-                            label = { Text("2027 г.") }
+                            label = { Text("2027 г. (предварительно)") }
                         )
+                    }
+                }
+
+                if (selectedYear == 2027) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth().testTag("preliminary_2027_banner")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "⚠️ Цифры на 2027 год (минималка 14.94 €/ч и стандартный порог 46 500 €) носят предварительный характер и ожидают подтверждения Revenue.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 

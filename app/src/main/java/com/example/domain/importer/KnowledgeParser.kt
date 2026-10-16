@@ -7,49 +7,111 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
+import java.time.LocalDate
 import java.util.UUID
 
 object KnowledgeParser {
 
+    data class Frontmatter(
+        val title: String? = null,
+        val country: String? = null,
+        val section: String? = null,
+        val source: String? = null,
+        val verified: String? = null
+    )
+
+    /**
+     * Parses optional YAML-style frontmatter at the beginning of the file:
+     * ---
+     * Title: Example Title
+     * Country: ie
+     * Section: ie.tax
+     * Source: https://revenue.ie
+     * Verified: 2026-10-14
+     * ---
+     */
+    fun extractFrontmatter(text: String): Pair<Frontmatter, String> {
+        val trimmed = text.trimStart()
+        if (!trimmed.startsWith("---")) {
+            return Pair(Frontmatter(), text)
+        }
+
+        val secondDelimiter = trimmed.indexOf("\n---", startIndex = 3)
+        if (secondDelimiter == -1) {
+            return Pair(Frontmatter(), text)
+        }
+
+        val frontmatterContent = trimmed.substring(3, secondDelimiter)
+        val bodyContent = trimmed.substring(secondDelimiter + 4).trimStart('\r', '\n')
+
+        var title: String? = null
+        var country: String? = null
+        var section: String? = null
+        var source: String? = null
+        var verified: String? = null
+
+        for (line in frontmatterContent.lines()) {
+            val colonIndex = line.indexOf(':')
+            if (colonIndex > 0) {
+                val key = line.substring(0, colonIndex).trim().lowercase()
+                val value = line.substring(colonIndex + 1).trim().trim('"', '\'')
+                when (key) {
+                    "title" -> title = value
+                    "country" -> country = value
+                    "section" -> section = value
+                    "source" -> source = value
+                    "verified" -> verified = value
+                }
+            }
+        }
+
+        return Pair(
+            Frontmatter(title, country, section, source, verified),
+            bodyContent
+        )
+    }
+
     /**
      * Parses MD or TXT text into ArticleEntity items.
-     * Recognizes top-level # and ## headers as article boundaries or processes whole text.
+     * Extracts frontmatter metadata (Title, Country, Section, Source, Verified)
+     * and splits remaining text by # and ## headings.
      */
     fun parseMarkdownOrText(
         text: String,
         defaultCountryId: String = "ie",
         defaultSectionId: String = "status"
     ): List<ArticleEntity> {
-        val lines = text.lines()
+        val (frontmatter, content) = extractFrontmatter(text)
+
+        val countryId = frontmatter.country?.ifBlank { defaultCountryId } ?: defaultCountryId
+        val sectionId = frontmatter.section?.ifBlank { defaultSectionId } ?: defaultSectionId
+        val fullSectionId = if (sectionId.contains(".")) sectionId else "$countryId.$sectionId"
+        val defaultSource = frontmatter.source ?: "custom_import"
+        val defaultVerified = frontmatter.verified ?: LocalDate.now().toString()
+
+        val lines = content.lines()
         val articles = mutableListOf<ArticleEntity>()
 
-        var currentCountryId = defaultCountryId
-        var currentSectionId = defaultSectionId
-        var currentTitle = ""
+        var currentTitle = frontmatter.title ?: ""
         var currentBody = StringBuilder()
 
         fun flushArticle() {
             val title = currentTitle.trim().ifBlank { "Загруженный материал" }
             val body = currentBody.toString().trim()
             if (body.isNotBlank()) {
-                val fullSectionId = if (currentSectionId.contains(".")) currentSectionId else "$currentCountryId.$currentSectionId"
                 articles.add(
                     ArticleEntity(
-                        id = "$currentCountryId.custom.${UUID.randomUUID().toString().take(8)}",
-                        countryId = currentCountryId,
+                        id = "$countryId.custom.${UUID.randomUUID().toString().take(8)}",
+                        countryId = countryId,
                         sectionId = fullSectionId,
                         kind = ArticleKind.GUIDE,
                         titleRu = title,
                         subtitle = "Импортировано пользователем",
                         bodyMd = body,
-                        keywords = "$title $currentCountryId",
+                        keywords = "$title $countryId",
                         applicableTo = "ANY",
-                        sourceIds = "custom_import",
-                        verifiedAt = java.time.LocalDate.now().toString(),
+                        sourceIds = defaultSource,
+                        verifiedAt = defaultVerified,
                         status = VerificationStatus.VERIFIED,
                         archived = 0,
                         sortOrder = 100
@@ -63,26 +125,11 @@ object KnowledgeParser {
         for (line in lines) {
             val trimmed = line.trim()
 
-            // Country switch detection
-            if (trimmed.equals("# Ирландия", ignoreCase = true) || trimmed.equals("--- Ирландия ---", ignoreCase = true)) {
-                flushArticle()
-                currentCountryId = "ie"
-                continue
-            }
-            if (trimmed.equals("# Германия", ignoreCase = true) || trimmed.equals("--- Германия ---", ignoreCase = true)) {
-                flushArticle()
-                currentCountryId = "de"
-                continue
-            }
-            if (trimmed.equals("# Нидерланды", ignoreCase = true) || trimmed.equals("--- Нидерланды ---", ignoreCase = true)) {
-                flushArticle()
-                currentCountryId = "nl"
-                continue
-            }
-
-            // Section detection
+            // Header split detection
             if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
-                flushArticle()
+                if (currentBody.isNotBlank()) {
+                    flushArticle()
+                }
                 currentTitle = trimmed.removePrefix("## ").removePrefix("# ").trim()
                 continue
             }
@@ -117,6 +164,8 @@ object KnowledgeParser {
                 val section = obj["sectionId"]?.jsonPrimitive?.content ?: "$country.general"
                 val title = obj["titleRu"]?.jsonPrimitive?.content ?: obj["title"]?.jsonPrimitive?.content ?: "Без названия"
                 val body = obj["bodyMd"]?.jsonPrimitive?.content ?: obj["body"]?.jsonPrimitive?.content ?: ""
+                val source = obj["source"]?.jsonPrimitive?.content ?: obj["sourceIds"]?.jsonPrimitive?.content ?: "custom_json"
+                val verifiedAt = obj["verifiedAt"]?.jsonPrimitive?.content ?: LocalDate.now().toString()
 
                 list.add(
                     ArticleEntity(
@@ -129,8 +178,8 @@ object KnowledgeParser {
                         bodyMd = body,
                         keywords = obj["keywords"]?.jsonPrimitive?.content ?: title,
                         applicableTo = "ANY",
-                        sourceIds = "custom_json",
-                        verifiedAt = java.time.LocalDate.now().toString(),
+                        sourceIds = source,
+                        verifiedAt = verifiedAt,
                         status = VerificationStatus.VERIFIED,
                         archived = 0,
                         sortOrder = 100
@@ -143,4 +192,3 @@ object KnowledgeParser {
         }
     }
 }
-

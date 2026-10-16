@@ -19,6 +19,7 @@ import com.example.data.database.entity.SectionEntity
 import com.example.data.database.entity.SettingEntity
 import com.example.data.database.entity.ShareLogEntity
 import com.example.data.database.entity.UserContactEntity
+import com.example.data.database.entity.VerificationStatus
 import com.example.domain.search.SearchQueryBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -63,6 +64,102 @@ class CityRepository(
     suspend fun insertArticles(articles: List<ArticleEntity>) = database.articleDao().insertArticles(articles)
 
     suspend fun insertArticle(article: ArticleEntity) = database.articleDao().insertArticle(article)
+
+    suspend fun deleteArticle(articleId: String) = withContext(Dispatchers.IO) {
+        database.articleDao().deleteArticle(articleId)
+    }
+
+    suspend fun addCountry(
+        nameRu: String,
+        flagEmoji: String,
+        language: String,
+        currencyCode: String,
+        currencySymbol: String
+    ): CountryEntity = withContext(Dispatchers.IO) {
+        val baseSlug = nameRu.lowercase().replace(" ", "_").filter { it in 'a'..'z' || it in '0'..'9' }.take(6)
+        val slug = if (baseSlug.isNotBlank()) baseSlug else "c_" + UUID.randomUUID().toString().take(4)
+        val country = CountryEntity(
+            id = slug,
+            code = slug.uppercase().take(2),
+            nameRu = nameRu.trim(),
+            nameLocal = language.trim(),
+            flagEmoji = flagEmoji.trim().ifBlank { "🌐" },
+            currencyCode = currencyCode.trim().ifBlank { "EUR" },
+            currencySymbol = currencySymbol.trim().ifBlank { "€" },
+            sortOrder = 50
+        )
+        database.countryDao().insertCountry(country)
+
+        // 5 default sections according to docs/PRINCIPLES.md
+        val defaultSections = listOf(
+            SectionEntity(id = "$slug.status", countryId = slug, slug = "status", titleRu = "Статус и разрешения", iconKey = "badge", sortOrder = 1),
+            SectionEntity(id = "$slug.work", countryId = slug, slug = "work", titleRu = "Работа и права", iconKey = "work", sortOrder = 2),
+            SectionEntity(id = "$slug.tax", countryId = slug, slug = "tax", titleRu = "Налоги и зарплата", iconKey = "payments", sortOrder = 3),
+            SectionEntity(id = "$slug.housing", countryId = slug, slug = "housing", titleRu = "Жильё и аренда", iconKey = "home", sortOrder = 4),
+            SectionEntity(id = "$slug.health", countryId = slug, slug = "health", titleRu = "Здоровье и медицина", iconKey = "health_and_safety", sortOrder = 5)
+        )
+        database.sectionDao().insertAll(defaultSections)
+
+        // Initial empty glossary and phrasebook for this country
+        val initialGlossary = ArticleEntity(
+            id = "$slug.glossary",
+            countryId = slug,
+            sectionId = null,
+            kind = ArticleKind.GLOSSARY,
+            titleRu = "Словарь терминов (${nameRu.trim()})",
+            subtitle = "Ключевые термины и сокращения",
+            bodyMd = "# Словарь терминов\n\nСловарь пуст. Добавьте первый термин через «+ Новый термин» или загрузите файл.",
+            keywords = "словарь термины $slug",
+            applicableTo = "ANY",
+            sourceIds = "",
+            verifiedAt = LocalDate.now().toString(),
+            status = VerificationStatus.VERIFIED,
+            sortOrder = 1
+        )
+        val initialPhrases = ArticleEntity(
+            id = "$slug.phrases",
+            countryId = slug,
+            sectionId = null,
+            kind = ArticleKind.PHRASE_SET,
+            titleRu = "Разговорник (${nameRu.trim()})",
+            subtitle = "Фразы для работы, жилья, врача",
+            bodyMd = "# Разговорник\n\nРазговорник пуст. Добавьте первую фразу через «+ Новая фраза» или загрузите файл.",
+            keywords = "разговорник фразы $slug",
+            applicableTo = "ANY",
+            sourceIds = "",
+            verifiedAt = LocalDate.now().toString(),
+            status = VerificationStatus.VERIFIED,
+            sortOrder = 2
+        )
+        database.articleDao().insertArticle(initialGlossary)
+        database.articleDao().insertArticle(initialPhrases)
+
+        // Key figures initial rate
+        val defaultRate = RateEntity(
+            id = "$slug.min_wage_adult",
+            countryId = slug,
+            key = "$slug.min_wage_adult",
+            value = 0.0,
+            unit = "${country.currencySymbol}/ч",
+            validFrom = LocalDate.now().toString(),
+            sourceId = "manual_entry",
+            status = VerificationStatus.VERIFIED
+        )
+        database.rateDao().insertRate(defaultRate)
+
+        country
+    }
+
+    suspend fun deleteCountry(countryId: String) = withContext(Dispatchers.IO) {
+        database.articleDao().deleteArticlesForCountry(countryId)
+        database.sectionDao().deleteSectionsForCountry(countryId)
+        database.rateDao().deleteRatesForCountry(countryId)
+        database.countryDao().deleteCountry(countryId)
+    }
+
+    suspend fun saveRate(rate: RateEntity) = withContext(Dispatchers.IO) {
+        database.rateDao().insertRate(rate)
+    }
 
     fun getRatesForCountry(countryId: String): Flow<List<RateEntity>> =
         database.rateDao().getRatesForCountry(countryId)

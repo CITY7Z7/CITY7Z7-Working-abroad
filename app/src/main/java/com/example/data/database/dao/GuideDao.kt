@@ -29,6 +29,12 @@ interface CountryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(countries: List<CountryEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCountry(country: CountryEntity)
+
+    @Query("DELETE FROM country WHERE id = :countryId")
+    suspend fun deleteCountry(countryId: String)
 }
 
 @Dao
@@ -38,6 +44,12 @@ interface SectionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(sections: List<SectionEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSection(section: SectionEntity)
+
+    @Query("DELETE FROM section WHERE countryId = :countryId")
+    suspend fun deleteSectionsForCountry(countryId: String)
 }
 
 @Dao
@@ -82,6 +94,12 @@ interface ArticleDao {
 
     @Query("UPDATE article SET archived = 1 WHERE id NOT IN (:activeIds) AND countryId = :countryId")
     suspend fun archiveMissingArticles(activeIds: List<String>, countryId: String)
+
+    @Query("DELETE FROM article WHERE id = :id")
+    suspend fun deleteArticle(id: String)
+
+    @Query("DELETE FROM article WHERE countryId = :countryId")
+    suspend fun deleteArticlesForCountry(countryId: String)
 }
 
 @Dao
@@ -103,6 +121,12 @@ interface RateDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(rates: List<RateEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRate(rate: RateEntity)
+
+    @Query("DELETE FROM rate WHERE countryId = :countryId")
+    suspend fun deleteRatesForCountry(countryId: String)
 }
 
 @Dao

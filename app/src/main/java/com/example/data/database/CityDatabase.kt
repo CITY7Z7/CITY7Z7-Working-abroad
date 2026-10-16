@@ -62,7 +62,7 @@ import com.example.data.database.entity.UserContactEntity
         DocumentAlertEntity::class,
         ShareLogEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class CityDatabase : RoomDatabase() {
@@ -86,6 +86,22 @@ abstract class CityDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: CityDatabase? = null
 
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                // Preserves all user data between v1 and v2
+            }
+        }
+
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                // Clean up any old seed countries other than Ireland without touching user data
+                db.execSQL("DELETE FROM country WHERE id NOT IN ('ie')")
+                db.execSQL("DELETE FROM section WHERE countryId IS NOT NULL AND countryId NOT IN ('ie')")
+                db.execSQL("DELETE FROM article WHERE countryId IS NOT NULL AND countryId NOT IN ('ie')")
+                db.execSQL("DELETE FROM rate WHERE countryId NOT IN ('ie')")
+            }
+        }
+
         fun getInstance(context: Context): CityDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -94,7 +110,7 @@ abstract class CityDatabase : RoomDatabase() {
                     "city7z7_database.db"
                 )
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

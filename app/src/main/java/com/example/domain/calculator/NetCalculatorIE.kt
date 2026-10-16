@@ -1,5 +1,7 @@
 package com.example.domain.calculator
 
+import com.example.data.database.entity.RateEntity
+
 data class TaxBreakdown(
     val grossYear: Double,
     val grossMonth: Double,
@@ -12,80 +14,118 @@ data class TaxBreakdown(
     val effectiveTaxRate: Double
 )
 
+data class IrishTaxRates(
+    val cutoff: Double,
+    val personalCredit: Double,
+    val employeeCredit: Double,
+    val uscExempt: Double,
+    val uscBand1Ceiling: Double,
+    val uscBand2Ceiling: Double,
+    val uscBand3Ceiling: Double,
+    val prsiRate: Double,
+    val minWageAdult: Double
+) {
+    val totalCredits: Double get() = personalCredit + employeeCredit
+
+    companion object {
+        fun fromDatabase(rates: List<RateEntity>, year: Int): IrishTaxRates {
+            val prefix = if (year >= 2027) "2027" else "2026"
+
+            fun findRate(key: String, fallback: Double): Double {
+                val matched = rates.firstOrNull { it.key == key && (it.validFrom.startsWith(year.toString()) || it.id.endsWith(prefix)) }
+                    ?: rates.firstOrNull { it.key == key }
+                return matched?.value ?: fallback
+            }
+
+            val cutoff = findRate("ie.it_band_single", if (year >= 2027) 46500.0 else 44000.0)
+            val personalCredit = findRate("ie.credit_personal_single", if (year >= 2027) 2125.0 else 2000.0)
+            val employeeCredit = findRate("ie.credit_employee", if (year >= 2027) 2125.0 else 2000.0)
+            val uscExempt = findRate("ie.usc_exempt_income", 13000.0)
+            val uscBand1 = findRate("ie.usc_band1_ceiling", 12012.0)
+            val uscBand2 = findRate("ie.usc_band2_ceiling", if (year >= 2027) 30300.0 else 28700.0)
+            val uscBand3 = findRate("ie.usc_band3_ceiling", 70044.0)
+            val prsiPercent = findRate("ie.prsi_employee", if (year >= 2027) 4.5 else 4.35)
+            val minWage = findRate("ie.min_wage_adult", if (year >= 2027) 14.94 else 14.15)
+
+            return IrishTaxRates(
+                cutoff = cutoff,
+                personalCredit = personalCredit,
+                employeeCredit = employeeCredit,
+                uscExempt = uscExempt,
+                uscBand1Ceiling = uscBand1,
+                uscBand2Ceiling = uscBand2,
+                uscBand3Ceiling = uscBand3,
+                prsiRate = prsiPercent / 100.0,
+                minWageAdult = minWage
+            )
+        }
+    }
+}
+
 object NetCalculatorIE {
 
     fun calculate(
         hourlyRate: Double,
         weeklyHours: Double = 39.0,
-        year: Int = 2027
+        year: Int = 2026,
+        config: IrishTaxRates? = null
     ): TaxBreakdown {
         val grossYear = hourlyRate * weeklyHours * 52.0
-        return calculateFromGross(grossYear, year)
+        return calculateFromGross(grossYear, year, config)
     }
 
     fun calculateFromGross(
         grossYear: Double,
-        year: Int = 2027
+        year: Int = 2026,
+        config: IrishTaxRates? = null
     ): TaxBreakdown {
+        val rates = config ?: IrishTaxRates.fromDatabase(emptyList(), year)
         if (grossYear <= 0.0) {
             return TaxBreakdown(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         }
 
         // 1. PAYE (Income Tax)
-        val cutoff = if (year >= 2027) 46500.0 else 44000.0
-        val taxCredits = if (year >= 2027) 4250.0 else 4000.0 // Personal + Employee credits
-
-        val standardTax = kotlin.math.min(grossYear, cutoff) * 0.20
-        val higherTax = kotlin.math.max(0.0, grossYear - cutoff) * 0.40
-        val paye = kotlin.math.max(0.0, (standardTax + higherTax) - taxCredits)
+        val standardTax = kotlin.math.min(grossYear, rates.cutoff) * 0.20
+        val higherTax = kotlin.math.max(0.0, grossYear - rates.cutoff) * 0.40
+        val paye = kotlin.math.max(0.0, (standardTax + higherTax) - rates.totalCredits)
 
         // 2. USC (Universal Social Charge)
-        val usc: Double = if (grossYear <= 13000.0) {
+        val usc: Double = if (grossYear <= rates.uscExempt) {
             0.0
         } else {
-            val band1Ceiling = 12012.0
-            val band2Ceiling = if (year >= 2027) 30300.0 else 28700.0
-            val band3Ceiling = 70044.0
-
             var u = 0.0
             // Band 1: 0.5%
-            u += kotlin.math.min(grossYear, band1Ceiling) * 0.005
+            u += kotlin.math.min(grossYear, rates.uscBand1Ceiling) * 0.005
 
             // Band 2: 2.0%
-            if (grossYear > band1Ceiling) {
-                val taxableBand2 = kotlin.math.min(grossYear, band2Ceiling) - band1Ceiling
+            if (grossYear > rates.uscBand1Ceiling) {
+                val taxableBand2 = kotlin.math.min(grossYear, rates.uscBand2Ceiling) - rates.uscBand1Ceiling
                 u += taxableBand2 * 0.02
             }
 
             // Band 3: 3.0%
-            if (grossYear > band2Ceiling) {
-                val taxableBand3 = kotlin.math.min(grossYear, band3Ceiling) - band2Ceiling
+            if (grossYear > rates.uscBand2Ceiling) {
+                val taxableBand3 = kotlin.math.min(grossYear, rates.uscBand3Ceiling) - rates.uscBand2Ceiling
                 u += taxableBand3 * 0.03
             }
 
             // Band 4: 8.0%
-            if (grossYear > band3Ceiling) {
-                val taxableBand4 = grossYear - band3Ceiling
+            if (grossYear > rates.uscBand3Ceiling) {
+                val taxableBand4 = grossYear - rates.uscBand3Ceiling
                 u += taxableBand4 * 0.08
             }
             u
         }
 
         // 3. PRSI (Pay Related Social Insurance)
-        val prsiRate = if (year >= 2027) {
-            (9 * 0.0435 + 3 * 0.0450) / 12.0 // ~4.3875%
-        } else {
-            (9 * 0.0420 + 3 * 0.0435) / 12.0 // ~4.2375%
-        }
-
         val weeklyGross = grossYear / 52.0
         val prsi = if (weeklyGross <= 352.0) {
             0.0
         } else if (weeklyGross <= 424.0) {
             val weeklyCredit = kotlin.math.max(0.0, 12.0 - ((weeklyGross - 352.0) / 6.0))
-            kotlin.math.max(0.0, (grossYear * prsiRate) - (weeklyCredit * 52.0))
+            kotlin.math.max(0.0, (grossYear * rates.prsiRate) - (weeklyCredit * 52.0))
         } else {
-            grossYear * prsiRate
+            grossYear * rates.prsiRate
         }
 
         val totalDeductions = paye + usc + prsi
@@ -102,31 +142,6 @@ object NetCalculatorIE {
             netYear = netYear,
             netMonth = netYear / 12.0,
             effectiveTaxRate = effectiveRate
-        )
-    }
-
-    /**
-     * Simplified calculation for other countries using a manual percentage deduction.
-     */
-    fun calculateSimplified(
-        grossAmount: Double,
-        deductionPercent: Double,
-        isHourly: Boolean = false,
-        weeklyHours: Double = 38.0
-    ): TaxBreakdown {
-        val grossYear = if (isHourly) grossAmount * weeklyHours * 52.0 else grossAmount * 12.0
-        val deductions = grossYear * (deductionPercent.coerceIn(0.0, 100.0) / 100.0)
-        val netYear = grossYear - deductions
-        return TaxBreakdown(
-            grossYear = grossYear,
-            grossMonth = grossYear / 12.0,
-            paye = deductions,
-            usc = 0.0,
-            prsi = 0.0,
-            totalDeductions = deductions,
-            netYear = netYear,
-            netMonth = netYear / 12.0,
-            effectiveTaxRate = deductionPercent
         )
     }
 }

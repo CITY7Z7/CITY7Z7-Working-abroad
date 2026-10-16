@@ -3,7 +3,10 @@ package com.example.ui.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -79,11 +83,43 @@ fun SimpleArticleKindScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val countries by repository.allCountries.collectAsState(initial = emptyList())
     var selectedCountry by remember { mutableStateOf<String?>("ie") }
     val profile by repository.profile.collectAsState(initial = null)
     val articles by repository.getArticlesByKind(kind, selectedCountry).collectAsState(initial = emptyList())
 
     var showCreateDialog by remember { mutableStateOf(false) }
+
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                try {
+                    val text = context.contentResolver.openInputStream(it)?.use { s -> s.bufferedReader().readText() } ?: ""
+                    val country = selectedCountry ?: "ie"
+                    val newArticle = ArticleEntity(
+                        id = "$country.${kind.name.lowercase()}.${UUID.randomUUID().toString().take(8)}",
+                        countryId = country,
+                        sectionId = null,
+                        kind = kind,
+                        titleRu = "Импорт (${if (kind == ArticleKind.GLOSSARY) "термины" else "фразы"})",
+                        subtitle = "Загружено из файла",
+                        bodyMd = text,
+                        keywords = "$title $country",
+                        applicableTo = "ANY",
+                        sourceIds = "file_import",
+                        verifiedAt = java.time.LocalDate.now().toString(),
+                        status = VerificationStatus.VERIFIED,
+                        archived = 0,
+                        sortOrder = 50
+                    )
+                    repository.insertArticle(newArticle)
+                    Toast.makeText(context, "Материал успешно импортирован", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Ошибка импорта: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -94,21 +130,34 @@ fun SimpleArticleKindScreen(
             breadcrumbs = listOf("Инструменты", title),
             onBack = onBack,
             actions = {
-                Button(
-                    onClick = { showCreateDialog = true },
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        when (kind) {
-                            ArticleKind.TEMPLATE -> "+ Новое письмо"
-                            ArticleKind.PHRASE_SET -> "+ Новая фраза"
-                            ArticleKind.GLOSSARY -> "+ Новый термин"
-                            else -> "+ Добавить"
-                        },
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { filePicker.launch("*/*") },
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.testTag("import_file_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Файл", style = MaterialTheme.typography.labelSmall)
+                    }
+
+                    Button(
+                        onClick = { showCreateDialog = true },
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.testTag("add_item_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            when (kind) {
+                                ArticleKind.TEMPLATE -> "+ Новое письмо"
+                                ArticleKind.PHRASE_SET -> "+ Новая фраза"
+                                ArticleKind.GLOSSARY -> "+ Новый термин"
+                                else -> "+ Добавить"
+                            },
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 }
             }
         )
@@ -121,36 +170,32 @@ fun SimpleArticleKindScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Country filter row
+                // Dynamic country filter row from database
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    FilterChip(
-                        selected = selectedCountry == "ie",
-                        onClick = { selectedCountry = "ie" },
-                        label = { Text("🇮🇪 Ирландия") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
-                    )
-                    FilterChip(
-                        selected = selectedCountry == "de",
-                        onClick = { selectedCountry = "de" },
-                        label = { Text("🇩🇪 Германия") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
-                    )
-                    FilterChip(
-                        selected = selectedCountry == "nl",
-                        onClick = { selectedCountry = "nl" },
-                        label = { Text("🇳🇱 Нидерланды") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
-                    )
+                    countries.forEach { c ->
+                        FilterChip(
+                            selected = selectedCountry == c.id,
+                            onClick = { selectedCountry = c.id },
+                            label = { Text("${c.flagEmoji} ${c.nameRu}") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
                     FilterChip(
                         selected = selectedCountry == null,
                         onClick = { selectedCountry = null },
                         label = { Text("🌍 Все страны") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
                 }
 
