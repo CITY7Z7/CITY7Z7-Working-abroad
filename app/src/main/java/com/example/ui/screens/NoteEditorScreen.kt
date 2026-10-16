@@ -9,11 +9,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -45,7 +46,6 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -78,7 +78,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.domain.normalizer.PasteMode
 import com.example.domain.normalizer.PasteNormalizer
@@ -106,14 +108,122 @@ fun NoteEditorScreen(
     var pasteResultToShow by remember { mutableStateOf<PasteResult?>(null) }
     var selectedPasteMode by remember { mutableStateOf(PasteMode.CLEANED) }
 
+    // TextFieldValue state for tracking selection and cursor position
+    var bodyTextFieldValue by remember { mutableStateOf(TextFieldValue(editorState.body)) }
+
+    // Synchronize external changes (e.g. initial load, undo, new note)
+    LaunchedEffect(editorState.body) {
+        if (bodyTextFieldValue.text != editorState.body) {
+            val currentSel = bodyTextFieldValue.selection
+            val safeStart = currentSel.start.coerceIn(0, editorState.body.length)
+            val safeEnd = currentSel.end.coerceIn(0, editorState.body.length)
+            bodyTextFieldValue = TextFieldValue(
+                text = editorState.body,
+                selection = TextRange(safeStart, safeEnd)
+            )
+        }
+    }
+
+    fun insertSnippet(snippet: String) {
+        val text = bodyTextFieldValue.text
+        val selection = bodyTextFieldValue.selection
+        val start = minOf(selection.start, selection.end)
+        val end = maxOf(selection.start, selection.end)
+        val newText = text.substring(0, start) + snippet + text.substring(end)
+        val newCursor = start + snippet.length
+        bodyTextFieldValue = TextFieldValue(
+            text = newText,
+            selection = TextRange(newCursor)
+        )
+        documentViewModel.onBodyChange(newText)
+    }
+
+    fun formatSelection(prefix: String, suffix: String = prefix, defaultPlaceholder: String = "") {
+        val text = bodyTextFieldValue.text
+        val selection = bodyTextFieldValue.selection
+        val start = minOf(selection.start, selection.end)
+        val end = maxOf(selection.start, selection.end)
+
+        if (start != end) {
+            val selected = text.substring(start, end)
+            val replacement = prefix + selected + suffix
+            val newText = text.substring(0, start) + replacement + text.substring(end)
+            val newCursor = start + replacement.length
+            bodyTextFieldValue = TextFieldValue(
+                text = newText,
+                selection = TextRange(newCursor)
+            )
+            documentViewModel.onBodyChange(newText)
+        } else {
+            val placeholder = defaultPlaceholder
+            val insertion = prefix + placeholder + suffix
+            val newText = text.substring(0, start) + insertion + text.substring(start)
+            val newSelection = if (placeholder.isNotEmpty()) {
+                TextRange(start + prefix.length, start + prefix.length + placeholder.length)
+            } else {
+                TextRange(start + insertion.length)
+            }
+            bodyTextFieldValue = TextFieldValue(
+                text = newText,
+                selection = newSelection
+            )
+            documentViewModel.onBodyChange(newText)
+        }
+    }
+
+    fun formatLines(prefix: String, defaultPlaceholder: String = "") {
+        val text = bodyTextFieldValue.text
+        val selection = bodyTextFieldValue.selection
+        val start = minOf(selection.start, selection.end)
+        val end = maxOf(selection.start, selection.end)
+
+        if (start != end) {
+            val selected = text.substring(start, end)
+            val formatted = selected.lines().joinToString("\n") { line ->
+                if (line.startsWith(prefix)) line else "$prefix$line"
+            }
+            val newText = text.substring(0, start) + formatted + text.substring(end)
+            bodyTextFieldValue = TextFieldValue(
+                text = newText,
+                selection = TextRange(start + formatted.length)
+            )
+            documentViewModel.onBodyChange(newText)
+        } else {
+            val lastNewline = text.lastIndexOf('\n', (start - 1).coerceAtLeast(0))
+            val lineStart = if (lastNewline == -1) 0 else lastNewline + 1
+            val currentLine = if (lineStart < text.length) {
+                val nextNewline = text.indexOf('\n', lineStart)
+                if (nextNewline == -1) text.substring(lineStart) else text.substring(lineStart, nextNewline)
+            } else ""
+
+            if (currentLine.isBlank()) {
+                val insertion = "$prefix$defaultPlaceholder"
+                val newText = text.substring(0, lineStart) + insertion + text.substring(lineStart)
+                val newCursor = lineStart + insertion.length
+                bodyTextFieldValue = TextFieldValue(
+                    text = newText,
+                    selection = TextRange(newCursor)
+                )
+                documentViewModel.onBodyChange(newText)
+            } else {
+                val newText = text.substring(0, lineStart) + prefix + text.substring(lineStart)
+                val newCursor = (start + prefix.length).coerceAtMost(newText.length)
+                bodyTextFieldValue = TextFieldValue(
+                    text = newText,
+                    selection = TextRange(newCursor)
+                )
+                documentViewModel.onBodyChange(newText)
+            }
+        }
+    }
+
     // Android Zero-permission Photo Picker
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
             val imgMd = "\n\n![Изображение]($uri)\n\n"
-            val updated = if (editorState.body.isBlank()) imgMd.trimStart() else editorState.body + imgMd
-            documentViewModel.onBodyChange(updated)
+            insertSnippet(imgMd)
             Toast.makeText(context, "Изображение добавлено в заметку", Toast.LENGTH_SHORT).show()
         }
     }
@@ -132,91 +242,114 @@ fun NoteEditorScreen(
             .background(MaterialTheme.colorScheme.background)
             .testTag("note_editor_screen")
     ) {
-        // 1. Top Action Bar with all mandatory actions
+        // 1. Compact, responsive Top Action Bar
         BreadcrumbsHeader(
             breadcrumbs = listOf("Заметки", if (editorState.isPrivate) "Приватная заметка" else editorState.title.ifBlank { "Без названия" }),
             onBack = onBack,
             actions = {
-                // Save button
-                Button(
-                    onClick = {
-                        documentViewModel.saveCurrentNoteImmediately()
-                        Toast.makeText(context, "Заметка сохранена", Toast.LENGTH_SHORT).show()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.testTag("save_note_button")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState())
                 ) {
-                    Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Сохранить", style = MaterialTheme.typography.labelSmall)
-                }
+                    // Save button
+                    Button(
+                        onClick = {
+                            documentViewModel.saveCurrentNoteImmediately()
+                            Toast.makeText(context, "Заметка сохранена", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = MaterialTheme.shapes.small,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier
+                            .height(32.dp)
+                            .testTag("save_note_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Сохранить", style = MaterialTheme.typography.labelSmall)
+                    }
 
-                // Pin toggle
-                IconButton(
-                    onClick = { documentViewModel.togglePinned() },
-                    modifier = Modifier.testTag("pin_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PushPin,
-                        contentDescription = "Закрепить",
-                        tint = if (editorState.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    // Pin toggle
+                    IconButton(
+                        onClick = { documentViewModel.togglePinned() },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("pin_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = "Закрепить",
+                            tint = if (editorState.isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                // Lock Read-Only toggle
-                IconButton(
-                    onClick = {
-                        documentViewModel.toggleLocked()
-                        val msg = if (!editorState.isLocked) "Заметка заблокирована от изменений" else "Заметка разблокирована"
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.testTag("lock_button")
-                ) {
-                    Icon(
-                        imageVector = if (editorState.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = "Заблокировать от изменений",
-                        tint = if (editorState.isLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    // Lock Read-Only toggle
+                    IconButton(
+                        onClick = {
+                            documentViewModel.toggleLocked()
+                            val msg = if (!editorState.isLocked) "Заметка заблокирована от изменений" else "Заметка разблокирована"
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("lock_button")
+                    ) {
+                        Icon(
+                            imageVector = if (editorState.isLocked) Icons.Default.Lock else Icons.Default.LockOpen,
+                            contentDescription = "Заблокировать от изменений",
+                            tint = if (editorState.isLocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                // Preview toggle
-                OutlinedButton(
-                    onClick = { documentViewModel.togglePreviewMode() },
-                    modifier = Modifier.testTag("preview_toggle_button")
-                ) {
-                    Icon(
-                        imageVector = if (editorState.isPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (editorState.isPreviewMode) "Редактор" else "Просмотр", style = MaterialTheme.typography.labelSmall)
-                }
+                    // Preview toggle
+                    OutlinedButton(
+                        onClick = { documentViewModel.togglePreviewMode() },
+                        shape = MaterialTheme.shapes.small,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier
+                            .height(32.dp)
+                            .testTag("preview_toggle_button")
+                    ) {
+                        Icon(
+                            imageVector = if (editorState.isPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (editorState.isPreviewMode) "Редактор" else "Просмотр", style = MaterialTheme.typography.labelSmall)
+                    }
 
-                // Copy Text
-                IconButton(
-                    onClick = {
-                        val full = buildString {
-                            if (editorState.title.isNotBlank()) append(editorState.title).append("\n\n")
-                            append(editorState.body)
-                        }
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Заметка", full)
-                        clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Текст заметки скопирован", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.testTag("copy_text_button")
-                ) {
-                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Копировать текст", tint = MaterialTheme.colorScheme.primary)
-                }
+                    // Copy Text
+                    IconButton(
+                        onClick = {
+                            val full = buildString {
+                                if (editorState.title.isNotBlank()) append(editorState.title).append("\n\n")
+                                append(editorState.body)
+                            }
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Заметка", full)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Текст заметки скопирован", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("copy_text_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Копировать текст", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    }
 
-                // Delete
-                IconButton(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.testTag("delete_note_button")
-                ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                    // Delete
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("delete_note_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         )
@@ -228,7 +361,7 @@ fun NoteEditorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(if (editorState.isLocked) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -272,9 +405,14 @@ fun NoteEditorScreen(
         if (!editorState.isPreviewMode && !editorState.isLocked) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             MarkdownToolbar(
-                onInsertText = { snippet ->
-                    val appended = if (editorState.body.isBlank()) snippet else "${editorState.body}\n$snippet"
-                    documentViewModel.onBodyChange(appended)
+                onFormatSelection = { prefix, suffix, defaultPlaceholder ->
+                    formatSelection(prefix, suffix, defaultPlaceholder)
+                },
+                onFormatLines = { prefix, defaultPlaceholder ->
+                    formatLines(prefix, defaultPlaceholder)
+                },
+                onInsertSnippet = { snippet ->
+                    insertSnippet(snippet)
                 },
                 onPickImage = {
                     photoPickerLauncher.launch(
@@ -298,12 +436,18 @@ fun NoteEditorScreen(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
-        // 4. Editor Body or Preview
-        BoxContainerCentered {
+        // 4. Editor Body or Preview (strictly weighted so it always fills remaining screen height)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.TopCenter
+        ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = 760.dp)
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
                 if (!editorState.isPreviewMode) {
                     // Title Input
@@ -313,7 +457,7 @@ fun NoteEditorScreen(
                         enabled = !editorState.isLocked,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                            .padding(vertical = 6.dp)
                             .testTag("note_title_input"),
                         textStyle = MaterialTheme.typography.headlineMedium.copy(
                             color = MaterialTheme.colorScheme.onBackground,
@@ -335,17 +479,22 @@ fun NoteEditorScreen(
                     )
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Body Monospace Input
+                    // Body Monospace Input with Selection Support
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
                         BasicTextField(
-                            value = editorState.body,
-                            onValueChange = { documentViewModel.onBodyChange(it) },
+                            value = bodyTextFieldValue,
+                            onValueChange = { newValue ->
+                                bodyTextFieldValue = newValue
+                                if (newValue.text != editorState.body) {
+                                    documentViewModel.onBodyChange(newValue.text)
+                                }
+                            },
                             enabled = !editorState.isLocked,
                             modifier = Modifier
                                 .fillMaxSize()
@@ -353,7 +502,7 @@ fun NoteEditorScreen(
                             textStyle = EditorTextStyle.copy(color = MaterialTheme.colorScheme.onBackground),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { innerTextField ->
-                                if (editorState.body.isEmpty()) {
+                                if (bodyTextFieldValue.text.isEmpty()) {
                                     Text(
                                         text = "Текст в формате Markdown (поддерживаются заголовки, списки, чек-листы - [ ], картинки ![alt](url), таблицы, цитаты)...",
                                         style = EditorTextStyle.copy(
@@ -437,9 +586,6 @@ fun NoteEditorScreen(
 
     // Smart Paste Normalizer Dialog
     pasteResultToShow?.let { pasteResult ->
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val rawClip = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
-
         AlertDialog(
             onDismissRequest = { pasteResultToShow = null },
             title = { Text("Умная вставка из буфера") },
@@ -460,6 +606,9 @@ fun NoteEditorScreen(
                     }
 
                     Text("Выберите режим нормализации:", style = MaterialTheme.typography.labelMedium)
+
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val rawClip = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(
@@ -498,12 +647,7 @@ fun NoteEditorScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val appended = if (editorState.body.isBlank()) {
-                            pasteResult.processedText
-                        } else {
-                            "${editorState.body}\n\n${pasteResult.processedText}"
-                        }
-                        documentViewModel.onBodyChange(appended)
+                        insertSnippet(pasteResult.processedText)
                         pasteResultToShow = null
                     }
                 ) {
@@ -521,7 +665,9 @@ fun NoteEditorScreen(
 
 @Composable
 private fun MarkdownToolbar(
-    onInsertText: (String) -> Unit,
+    onFormatSelection: (prefix: String, suffix: String, defaultPlaceholder: String) -> Unit,
+    onFormatLines: (prefix: String, defaultPlaceholder: String) -> Unit,
+    onInsertSnippet: (String) -> Unit,
     onPickImage: () -> Unit,
     onSmartPaste: () -> Unit,
     onUndo: () -> Unit,
@@ -540,59 +686,59 @@ private fun MarkdownToolbar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Undo
-            IconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Отмена", modifier = Modifier.size(18.dp))
             }
 
             // Headings
-            ToolbarButton(label = "H1") { onInsertText("# Заголовок 1") }
-            ToolbarButton(label = "H2") { onInsertText("## Заголовок 2") }
-            ToolbarButton(label = "H3") { onInsertText("### Заголовок 3") }
+            ToolbarButton(label = "H1") { onFormatLines("# ", "Заголовок 1") }
+            ToolbarButton(label = "H2") { onFormatLines("## ", "Заголовок 2") }
+            ToolbarButton(label = "H3") { onFormatLines("### ", "Заголовок 3") }
 
             // Bold
-            IconButton(onClick = { onInsertText("**жирный текст**") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatSelection("**", "**", "жирный текст") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.FormatBold, contentDescription = "Жирный", modifier = Modifier.size(18.dp))
             }
 
             // Italic
-            IconButton(onClick = { onInsertText("*курсивный текст*") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatSelection("*", "*", "курсивный текст") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.FormatItalic, contentDescription = "Курсив", modifier = Modifier.size(18.dp))
             }
 
             // Checklist
-            IconButton(onClick = { onInsertText("- [ ] Новый пункт") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatLines("- [ ] ", "Новый пункт") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.Checklist, contentDescription = "Чек-лист", modifier = Modifier.size(18.dp))
             }
 
             // Bullet list
-            IconButton(onClick = { onInsertText("- Пункт списка") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatLines("- ", "Пункт списка") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.FormatListBulleted, contentDescription = "Список", modifier = Modifier.size(18.dp))
             }
 
             // Numbered list
-            IconButton(onClick = { onInsertText("1. Первый пункт") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatLines("1. ", "Первый пункт") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.FormatListNumbered, contentDescription = "Нумерованный", modifier = Modifier.size(18.dp))
             }
 
             // Quote
-            IconButton(onClick = { onInsertText("> Важная цитата") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onFormatLines("> ", "Важная цитата") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.FormatQuote, contentDescription = "Цитата", modifier = Modifier.size(18.dp))
             }
 
             // Table
             IconButton(
                 onClick = {
-                    onInsertText(
-                        "| Параметр | Значение |\n|---|---|\n| Ставка | 14.15 € |\n| Налог | 20% |"
+                    onInsertSnippet(
+                        "\n| Параметр | Значение |\n|---|---|\n| Ставка | 14.15 € |\n| Налог | 20% |\n"
                     )
                 },
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(34.dp)
             ) {
                 Icon(Icons.Default.TableChart, contentDescription = "Таблица", modifier = Modifier.size(18.dp))
             }
 
             // Divider
-            IconButton(onClick = { onInsertText("---") }, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { onInsertSnippet("\n---\n") }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.HorizontalRule, contentDescription = "Разделитель", modifier = Modifier.size(18.dp))
             }
 
@@ -610,7 +756,7 @@ private fun MarkdownToolbar(
             )
 
             // Smart Paste
-            IconButton(onClick = onSmartPaste, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = onSmartPaste, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Default.ContentPaste, contentDescription = "Вставить", modifier = Modifier.size(18.dp))
             }
         }

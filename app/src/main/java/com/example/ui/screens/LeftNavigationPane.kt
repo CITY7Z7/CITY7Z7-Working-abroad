@@ -1,5 +1,10 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,14 +24,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,6 +60,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -76,6 +93,8 @@ fun LeftNavigationPane(
     val profile by mainViewModel.profile.collectAsState()
     val recentNotes by mainViewModel.sidebarNotes.collectAsState()
     val searchQuery by mainViewModel.searchQuery.collectAsState()
+
+    var isToolsExpanded by rememberSaveable { mutableStateOf(false) }
 
     val selectedCountry = countries.firstOrNull { it.id == selectedCountryId }
 
@@ -193,44 +212,154 @@ fun LeftNavigationPane(
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
             // ==========================================
-            // 2-й БЛОК: ОБЩИЕ ИНСТРУМЕНТЫ
+            // 2-й БЛОК: ОБЩИЕ ИНСТРУМЕНТЫ (Сворачиваемая папка, по умолчанию свёрнута)
             // ==========================================
-            Text(
-                text = "🛠 ОБЩИЕ ИНСТРУМЕНТЫ",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Surface(
+                onClick = { isToolsExpanded = !isToolsExpanded },
+                shape = MaterialTheme.shapes.small,
+                color = if (isToolsExpanded) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else Color.Transparent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("tools_folder_toggle")
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 7.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isToolsExpanded) Icons.Default.FolderOpen else Icons.Default.Folder,
+                            contentDescription = "Папка инструментов",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "🛠 ОБЩИЕ ИНСТРУМЕНТЫ",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = "10",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
 
-            ToolKind.entries.forEach { tool ->
-                val isSelected = (currentSelection as? Selection.Tool)?.kind == tool
-                NavigationItemRow(
-                    title = tool.titleRu,
-                    isSelected = isSelected,
-                    onClick = { mainViewModel.select(Selection.Tool(tool)) }
-                )
+                    Icon(
+                        imageVector = if (isToolsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isToolsExpanded) "Свернуть" else "Развернуть",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
-            NavigationItemRow(
-                title = "Импорт и веб-парсер знаний",
-                isSelected = currentSelection is Selection.KnowledgeImport,
-                icon = Icons.Default.CloudDownload,
-                onClick = { mainViewModel.select(Selection.KnowledgeImport) }
-            )
+            AnimatedVisibility(
+                visible = isToolsExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // 1. Калькулятор налогов
+                    NavigationItemRow(
+                        title = ToolKind.CALCULATOR.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.CALCULATOR,
+                        icon = Icons.Default.Calculate,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.CALCULATOR)) }
+                    )
 
-            NavigationItemRow(
-                title = "QR-визитка (Быстрая)",
-                isSelected = currentSelection is Selection.QrCard,
-                icon = Icons.Default.QrCode,
-                onClick = { mainViewModel.select(Selection.QrCard) }
-            )
+                    // 2. Разговорник
+                    NavigationItemRow(
+                        title = ToolKind.PHRASES.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.PHRASES,
+                        icon = Icons.Default.Translate,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.PHRASES)) }
+                    )
 
-            NavigationItemRow(
-                title = "Журнал отправок",
-                isSelected = currentSelection is Selection.ShareLog,
-                icon = Icons.Default.Folder,
-                onClick = { mainViewModel.select(Selection.ShareLog) }
-            )
+                    // 3. Словарь терминов
+                    NavigationItemRow(
+                        title = ToolKind.GLOSSARY.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.GLOSSARY,
+                        icon = Icons.Default.MenuBook,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.GLOSSARY)) }
+                    )
+
+                    // 4. Шаблоны писем
+                    NavigationItemRow(
+                        title = ToolKind.TEMPLATES.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.TEMPLATES,
+                        icon = Icons.Default.Email,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.TEMPLATES)) }
+                    )
+
+                    // 5. Что делать, если...
+                    NavigationItemRow(
+                        title = ToolKind.SITUATIONS.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.SITUATIONS,
+                        icon = Icons.Default.HelpOutline,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.SITUATIONS)) }
+                    )
+
+                    // 6. Мои контакты
+                    NavigationItemRow(
+                        title = ToolKind.CONTACTS.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.CONTACTS,
+                        icon = Icons.Default.Contacts,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.CONTACTS)) }
+                    )
+
+                    // 7. Настройки
+                    NavigationItemRow(
+                        title = ToolKind.SETTINGS.titleRu,
+                        isSelected = (currentSelection as? Selection.Tool)?.kind == ToolKind.SETTINGS,
+                        icon = Icons.Default.Settings,
+                        onClick = { mainViewModel.select(Selection.Tool(ToolKind.SETTINGS)) }
+                    )
+
+                    // 8. Импорт и веб-парсер знаний
+                    NavigationItemRow(
+                        title = "Импорт и веб-парсер знаний",
+                        isSelected = currentSelection is Selection.KnowledgeImport,
+                        icon = Icons.Default.CloudDownload,
+                        onClick = { mainViewModel.select(Selection.KnowledgeImport) }
+                    )
+
+                    // 9. QR-визитка (Быстрая)
+                    NavigationItemRow(
+                        title = "QR-визитка (Быстрая)",
+                        isSelected = currentSelection is Selection.QrCard,
+                        icon = Icons.Default.QrCode,
+                        onClick = { mainViewModel.select(Selection.QrCard) }
+                    )
+
+                    // 10. Журнал отправок
+                    NavigationItemRow(
+                        title = "Журнал отправок",
+                        isSelected = currentSelection is Selection.ShareLog,
+                        icon = Icons.Default.Folder,
+                        onClick = { mainViewModel.select(Selection.ShareLog) }
+                    )
+                }
+            }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
