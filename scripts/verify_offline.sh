@@ -13,6 +13,7 @@ echo "1. Verifying AndroidManifest.xml permissions whitelist..."
 MANIFEST="app/src/main/AndroidManifest.xml"
 
 FORBIDDEN_PERMS=(
+    "android.permission.INTERNET"
     "android.permission.ACCESS_FINE_LOCATION"
     "android.permission.READ_EXTERNAL_STORAGE"
     "android.permission.WRITE_EXTERNAL_STORAGE"

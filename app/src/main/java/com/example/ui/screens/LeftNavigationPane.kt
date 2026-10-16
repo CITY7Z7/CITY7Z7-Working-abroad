@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.HelpOutline
@@ -335,11 +336,11 @@ fun LeftNavigationPane(
                         onClick = { mainViewModel.select(Selection.Tool(ToolKind.SETTINGS)) }
                     )
 
-                    // 8. Импорт и веб-парсер знаний
+                    // 8. Импорт базы знаний
                     NavigationItemRow(
-                        title = "Импорт и веб-парсер знаний",
+                        title = "Импорт базы знаний",
                         isSelected = currentSelection is Selection.KnowledgeImport,
-                        icon = Icons.Default.CloudDownload,
+                        icon = Icons.Default.FileOpen,
                         onClick = { mainViewModel.select(Selection.KnowledgeImport) }
                     )
 
