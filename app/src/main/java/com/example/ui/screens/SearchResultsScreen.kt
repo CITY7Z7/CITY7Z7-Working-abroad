@@ -18,13 +18,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -70,10 +73,42 @@ fun SearchResultsScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "Результаты поиска по запросу «$query»",
+                    text = "Результаты поиска",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
+                )
+
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { mainViewModel.updateSearchQuery(it) },
+                    placeholder = { Text("Поиск статей, заметок, терминов...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("search_results_query_field"),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Поиск",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    trailingIcon = if (query.isNotEmpty()) {
+                        {
+                            IconButton(
+                                onClick = { mainViewModel.clearSearch() },
+                                modifier = Modifier.testTag("clear_search_results_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Очистить поиск",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else null,
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.small
                 )
 
                 val totalFound = searchResults.articles.size + searchResults.notes.size

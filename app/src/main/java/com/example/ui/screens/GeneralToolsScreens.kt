@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileOpen
@@ -56,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -88,7 +90,12 @@ fun SimpleArticleKindScreen(
     val profile by repository.profile.collectAsState(initial = null)
     val articles by repository.getArticlesByKind(kind, selectedCountry).collectAsState(initial = emptyList())
 
+    val clipboardManager = LocalClipboardManager.current
     var showCreateDialog by remember { mutableStateOf(false) }
+
+    // Collision dialog state for import
+    var pendingImportArticle by remember { mutableStateOf<ArticleEntity?>(null) }
+    var showCollisionDialog by remember { mutableStateOf(false) }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -96,12 +103,18 @@ fun SimpleArticleKindScreen(
                 try {
                     val text = context.contentResolver.openInputStream(it)?.use { s -> s.bufferedReader().readText() } ?: ""
                     val country = selectedCountry ?: "ie"
-                    val newArticle = ArticleEntity(
+                    val parsedTitle = if (text.lineSequence().firstOrNull()?.startsWith("#") == true) {
+                        text.lineSequence().first().removePrefix("#").trim()
+                    } else {
+                        "Импорт (${if (kind == ArticleKind.GLOSSARY) "термины" else "фразы"})"
+                    }
+
+                    val candidate = ArticleEntity(
                         id = "$country.${kind.name.lowercase()}.${UUID.randomUUID().toString().take(8)}",
                         countryId = country,
                         sectionId = null,
                         kind = kind,
-                        titleRu = "Импорт (${if (kind == ArticleKind.GLOSSARY) "термины" else "фразы"})",
+                        titleRu = parsedTitle,
                         subtitle = "Загружено из файла",
                         bodyMd = text,
                         keywords = "$title $country",
@@ -112,8 +125,16 @@ fun SimpleArticleKindScreen(
                         archived = 0,
                         sortOrder = 50
                     )
-                    repository.insertArticle(newArticle)
-                    Toast.makeText(context, "Материал успешно импортирован", Toast.LENGTH_SHORT).show()
+
+                    // Check for existing article with same title
+                    val existing = articles.firstOrNull { it.titleRu.equals(candidate.titleRu, ignoreCase = true) }
+                    if (existing != null) {
+                        pendingImportArticle = candidate.copy(id = existing.id)
+                        showCollisionDialog = true
+                    } else {
+                        repository.insertArticle(candidate)
+                        Toast.makeText(context, "Материал успешно импортирован", Toast.LENGTH_SHORT).show()
+                    }
                 } catch (e: Exception) {
                     Toast.makeText(context, "Ошибка импорта: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -138,7 +159,7 @@ fun SimpleArticleKindScreen(
                     ) {
                         Icon(imageVector = Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Файл", style = MaterialTheme.typography.labelSmall)
+                        Text("Импорт", style = MaterialTheme.typography.labelSmall)
                     }
 
                     Button(
@@ -150,9 +171,9 @@ fun SimpleArticleKindScreen(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             when (kind) {
-                                ArticleKind.TEMPLATE -> "+ Новое письмо"
-                                ArticleKind.PHRASE_SET -> "+ Новая фраза"
-                                ArticleKind.GLOSSARY -> "+ Новый термин"
+                                ArticleKind.TEMPLATE -> "+ Добавить шаблон"
+                                ArticleKind.PHRASE_SET -> "+ Добавить фразу"
+                                ArticleKind.GLOSSARY -> "+ Добавить термин"
                                 else -> "+ Добавить"
                             },
                             style = MaterialTheme.typography.labelSmall
@@ -305,23 +326,70 @@ fun SimpleArticleKindScreen(
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Вставьте или напишите текст. Можно использовать теги {{ФИО}}, {{Телефон}}, {{Email}} для автоподстановки из профиля.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Введите данные или вставьте текст:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                val clip = clipboardManager.getText()?.text ?: ""
+                                if (clip.isNotBlank()) {
+                                    if (newTitle.isBlank() && clip.lines().size > 1) {
+                                        newTitle = clip.lines().first().trim().take(60)
+                                        newBody = clip.lines().drop(1).joinToString("\n").trim()
+                                    } else if (newTitle.isBlank()) {
+                                        newTitle = clip.trim().take(60)
+                                    } else {
+                                        newBody = if (newBody.isBlank()) clip.trim() else "$newBody\n${clip.trim()}"
+                                    }
+                                    Toast.makeText(context, "Вставлено из буфера обмена", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Буфер обмена пуст", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.testTag("paste_from_clipboard_dialog_button")
+                        ) {
+                            Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Из буфера", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
                     OutlinedTextField(
                         value = newTitle,
                         onValueChange = { newTitle = it },
-                        label = { Text("Заголовок / Название") },
-                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text(
+                                when (kind) {
+                                    ArticleKind.GLOSSARY -> "Термин / Слово"
+                                    ArticleKind.PHRASE_SET -> "Фраза / Выражение"
+                                    else -> "Заголовок / Название"
+                                }
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("new_item_title_field"),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = newBody,
                         onValueChange = { newBody = it },
-                        label = { Text("Текст (поддерживает Markdown)") },
-                        modifier = Modifier.fillMaxWidth().height(160.dp),
+                        label = {
+                            Text(
+                                when (kind) {
+                                    ArticleKind.GLOSSARY -> "Определение / Значение (Markdown)"
+                                    ArticleKind.PHRASE_SET -> "Перевод, контекст, транскрипция"
+                                    else -> "Текст материала (Markdown)"
+                                }
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().height(160.dp).testTag("new_item_body_field"),
                         maxLines = 8
                     )
                 }
@@ -354,7 +422,8 @@ fun SimpleArticleKindScreen(
                             }
                         }
                     },
-                    enabled = newTitle.isNotBlank() && newBody.isNotBlank()
+                    enabled = newTitle.isNotBlank() && newBody.isNotBlank(),
+                    modifier = Modifier.testTag("save_new_item_button")
                 ) {
                     Text("Сохранить")
                 }
@@ -362,6 +431,67 @@ fun SimpleArticleKindScreen(
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
                     Text("Отмена")
+                }
+            }
+        )
+    }
+
+    // Dialog for Resolving Collisions during Import
+    val pending = pendingImportArticle
+    if (showCollisionDialog && pending != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showCollisionDialog = false
+                pendingImportArticle = null
+            },
+            title = { Text("Обнаружен существующий материал") },
+            text = {
+                Text("Материал с заголовком «${pending.titleRu}» уже существует в базе данных. Выберите действие:")
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            // Keep both (Save as copy)
+                            val copyArticle = pending.copy(
+                                id = "${pending.id}_copy_${System.currentTimeMillis() % 1000}",
+                                titleRu = "${pending.titleRu} (копия)"
+                            )
+                            scope.launch {
+                                repository.insertArticle(copyArticle)
+                                showCollisionDialog = false
+                                pendingImportArticle = null
+                                Toast.makeText(context, "Сохранено как копия", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        Text("Создать копию")
+                    }
+                    Button(
+                        onClick = {
+                            // Overwrite
+                            scope.launch {
+                                repository.insertArticle(pending)
+                                showCollisionDialog = false
+                                pendingImportArticle = null
+                                Toast.makeText(context, "Перезаписано", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        Text("Перезаписать")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // Skip duplicate
+                        showCollisionDialog = false
+                        pendingImportArticle = null
+                        Toast.makeText(context, "Импорт дубликата пропущен", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text("Пропустить")
                 }
             }
         )

@@ -17,3 +17,7 @@ local.properties
 .env
 debug.keystore
 desktop.ini
+.idea
+gradle.properties
+gradle/gradle-daemon-jvm.properties
+

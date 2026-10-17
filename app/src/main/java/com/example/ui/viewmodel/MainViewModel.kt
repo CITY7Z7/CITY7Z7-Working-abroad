@@ -151,6 +151,7 @@ class MainViewModel(
     }
 
     fun deleteCountry(countryId: String) {
+        if (countryId.equals("ie", ignoreCase = true)) return
         viewModelScope.launch {
             repository.deleteCountry(countryId)
             if (_selectedCountryId.value == countryId) {

@@ -18,10 +18,20 @@ object ReverseCalculator {
         targetNetYear: Double,
         weeklyHours: Double = 39.0,
         year: Int = 2027,
-        minimumWage: Double = 14.94
+        minimumWage: Double = 14.94,
+        maritalStatus: MaritalStatus = MaritalStatus.SINGLE,
+        hasRentCredit: Boolean = false,
+        pensionPercent: Double = 0.0
     ): ReverseCalculationResult {
         if (targetNetYear <= 0.0) {
-            val emptyBreakdown = NetCalculatorIE.calculate(0.0, weeklyHours, year)
+            val emptyBreakdown = NetCalculatorIE.calculate(
+                hourlyRate = 0.0,
+                weeklyHours = weeklyHours,
+                year = year,
+                maritalStatus = maritalStatus,
+                hasRentCredit = hasRentCredit,
+                pensionPercent = pensionPercent
+            )
             return ReverseCalculationResult(0.0, emptyBreakdown, true, minimumWage, 0)
         }
 
@@ -38,7 +48,14 @@ object ReverseCalculator {
         while (iterations < maxIterations && (highRate - lowRate) > precision) {
             iterations++
             val midRate = (lowRate + highRate) / 2.0
-            val breakdown = NetCalculatorIE.calculate(midRate, weeklyHours, year)
+            val breakdown = NetCalculatorIE.calculate(
+                hourlyRate = midRate,
+                weeklyHours = weeklyHours,
+                year = year,
+                maritalStatus = maritalStatus,
+                hasRentCredit = hasRentCredit,
+                pensionPercent = pensionPercent
+            )
 
             if (kotlin.math.abs(breakdown.netYear - targetNetYear) < 1.0) { // within 1 euro
                 bestRate = midRate
@@ -54,7 +71,14 @@ object ReverseCalculator {
         }
 
         val roundedRate = kotlin.math.round(bestRate * 100.0) / 100.0
-        val finalBreakdown = NetCalculatorIE.calculate(roundedRate, weeklyHours, year)
+        val finalBreakdown = NetCalculatorIE.calculate(
+            hourlyRate = roundedRate,
+            weeklyHours = weeklyHours,
+            year = year,
+            maritalStatus = maritalStatus,
+            hasRentCredit = hasRentCredit,
+            pensionPercent = pensionPercent
+        )
 
         return ReverseCalculationResult(
             requiredHourlyRate = roundedRate,

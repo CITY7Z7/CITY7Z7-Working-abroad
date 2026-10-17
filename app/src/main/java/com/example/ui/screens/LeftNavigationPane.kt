@@ -525,16 +525,18 @@ fun LeftNavigationPane(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            IconButton(
-                                onClick = { countryToDelete = selectedCountry },
-                                modifier = Modifier.size(26.dp).testTag("delete_country_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Удалить страну",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                            if (!selectedCountry.id.equals("ie", ignoreCase = true)) {
+                                IconButton(
+                                    onClick = { countryToDelete = selectedCountry },
+                                    modifier = Modifier.size(26.dp).testTag("delete_country_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Удалить страну",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
 

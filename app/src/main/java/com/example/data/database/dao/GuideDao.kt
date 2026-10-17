@@ -63,7 +63,7 @@ interface ArticleDao {
     @Query("SELECT * FROM article WHERE countryId = :countryId AND sectionId = :sectionId AND archived = 0 ORDER BY sortOrder ASC")
     fun getArticlesBySection(countryId: String, sectionId: String): Flow<List<ArticleEntity>>
 
-    @Query("SELECT * FROM article WHERE kind = :kind AND (countryId = :countryId OR countryId IS NULL) AND archived = 0 ORDER BY sortOrder ASC")
+    @Query("SELECT * FROM article WHERE kind = :kind AND (:countryId IS NULL OR countryId = :countryId OR countryId IS NULL) AND archived = 0 ORDER BY sortOrder ASC")
     fun getArticlesByKind(kind: ArticleKind, countryId: String? = null): Flow<List<ArticleEntity>>
 
     @Query("SELECT * FROM article WHERE countryId = :countryId AND kind = 'FACT_CARD' AND archived = 0 LIMIT 1")

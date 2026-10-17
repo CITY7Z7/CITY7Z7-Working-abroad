@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,14 +68,20 @@ fun NotesHubScreen(
 ) {
     val allNotes by repository.allNotes.collectAsState(initial = emptyList())
     var selectedFilter by remember { mutableStateOf("ALL") } // "ALL", "PINNED", "LOCKED"
+    var searchQuery by remember { mutableStateOf("") }
 
-    val filteredNotes = remember(allNotes, selectedFilter) {
+    val filteredNotes = remember(allNotes, selectedFilter, searchQuery) {
         allNotes.filter { note ->
-            when (selectedFilter) {
+            val matchesFilter = when (selectedFilter) {
                 "PINNED" -> note.pinned
                 "LOCKED" -> note.isLocked
                 else -> true
             }
+            val matchesSearch = if (searchQuery.isBlank()) true else {
+                note.title.contains(searchQuery, ignoreCase = true) ||
+                note.body.contains(searchQuery, ignoreCase = true)
+            }
+            matchesFilter && matchesSearch
         }
     }
 
@@ -110,6 +117,39 @@ fun NotesHubScreen(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+
+                // Search Notes
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Поиск заметок...", style = MaterialTheme.typography.bodySmall) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("notes_search_field"),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Поиск",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        {
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.testTag("clear_notes_search_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Очистить поиск",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else null,
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.small
+                )
 
                 // Filter Chips
                 Row(

@@ -65,6 +65,8 @@ class CityRepository(
 
     suspend fun insertArticle(article: ArticleEntity) = database.articleDao().insertArticle(article)
 
+    suspend fun getAllActiveArticles(): List<ArticleEntity> = database.articleDao().getAllActiveArticles()
+
     suspend fun deleteArticle(articleId: String) = withContext(Dispatchers.IO) {
         database.articleDao().deleteArticle(articleId)
     }
@@ -151,6 +153,10 @@ class CityRepository(
     }
 
     suspend fun deleteCountry(countryId: String) = withContext(Dispatchers.IO) {
+        if (countryId.equals("ie", ignoreCase = true)) {
+            // Ireland is the primary foundational country in the system and cannot be deleted
+            return@withContext
+        }
         database.articleDao().deleteArticlesForCountry(countryId)
         database.sectionDao().deleteSectionsForCountry(countryId)
         database.rateDao().deleteRatesForCountry(countryId)
