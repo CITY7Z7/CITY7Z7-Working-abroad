@@ -35,7 +35,9 @@ fun KeyFiguresCard(
         ?: rates.firstOrNull { it.key.contains("min_wage") && !it.key.contains("18") && !it.key.contains("19") && !it.key.contains("u18") }
 
     val minWageText = if (adultWageRate != null && adultWageRate.value > 0.0) {
-        val verifiedSuffix = if (adultWageRate.status.name == "TO_VERIFY") {
+        val verifiedSuffix = if (adultWageRate.id == "ie.min_wage_adult_2027") {
+            " (по Budget 2027)"
+        } else if (adultWageRate.status.name == "TO_VERIFY") {
             " (предварительно)"
         } else {
             " (пров. ${adultWageRate.validFrom})"

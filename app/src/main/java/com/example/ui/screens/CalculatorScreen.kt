@@ -248,30 +248,9 @@ fun CalculatorScreen(
                                     selectedYear = 2027
                                     if (hourlyRateInput == "14.15") hourlyRateInput = "14.94"
                                 },
-                                label = { Text("2027 г. (предв.)") },
+                                label = { Text("2027 г. (по Budget 2027)") },
                                 modifier = Modifier.testTag("year_2027")
                             )
-                        }
-                    }
-
-                    if (selectedYear == 2027) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            shape = MaterialTheme.shapes.small,
-                            modifier = Modifier.fillMaxWidth().testTag("preliminary_2027_banner")
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Предварительные ставки 2027: мин. ставка 14.94 €/ч, стандартный порог 46 500 €, кредиты 2 125 €, PRSI 4.5%.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
                         }
                     }
 
@@ -602,7 +581,7 @@ private fun RatesScreenContent(
                 FilterChip(
                     selected = selectedYear == 2027,
                     onClick = { onYearChange(2027) },
-                    label = { Text("2027 г. (предв.)") }
+                    label = { Text("2027 г. (по Budget 2027)") }
                 )
             }
         }

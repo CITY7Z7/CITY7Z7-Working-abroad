@@ -273,7 +273,7 @@ fun SettingsScreen(
                     }
                 }
 
-                // About & Version Card (v2.4.0)
+                // About & Version Card (v2.4.1)
                 Card(
                     modifier = Modifier.fillMaxWidth().testTag("app_version_info"),
                     shape = MaterialTheme.shapes.medium,
@@ -298,7 +298,7 @@ fun SettingsScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ) {
                                 Text(
-                                    text = "v2.4.0",
+                                    text = "v2.4.1",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp).testTag("app_version_label")
