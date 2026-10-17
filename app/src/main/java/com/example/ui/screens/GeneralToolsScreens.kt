@@ -505,7 +505,9 @@ fun ContactsScreen(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
-    val contacts by repository.getContacts(null).collectAsState(initial = emptyList())
+    val countries by repository.allCountries.collectAsState(initial = emptyList())
+    var selectedCountry by remember { mutableStateOf<String?>(null) }
+    val contacts by repository.getContacts(selectedCountry).collectAsState(initial = emptyList())
     var showAddDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -536,6 +538,35 @@ fun ContactsScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Dynamic country filter row from database
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedCountry == null,
+                        onClick = { selectedCountry = null },
+                        label = { Text("🌍 Все контакты") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                    countries.forEach { c ->
+                        FilterChip(
+                            selected = selectedCountry == c.id,
+                            onClick = { selectedCountry = c.id },
+                            label = { Text("${c.flagEmoji} ${c.nameRu}") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+                }
+
                 if (contacts.isEmpty()) {
                     Text(
                         text = "Контакты не добавлены. Нажмите «Добавить», чтобы внести консульство, работодателя или врача.",
@@ -548,6 +579,7 @@ fun ContactsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(contacts, key = { it.id }) { contact ->
+                            val contactCountry = countries.firstOrNull { it.id == contact.countryId }
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = MaterialTheme.shapes.small,
@@ -560,7 +592,17 @@ fun ContactsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(text = contact.label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                            if (contactCountry != null) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "${contactCountry.flagEmoji} ${contactCountry.nameRu}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
                                         Text(text = contact.phone, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                                         if (contact.note.isNotBlank()) {
                                             Text(text = contact.note, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -586,12 +628,34 @@ fun ContactsScreen(
         var labelInput by remember { mutableStateOf("") }
         var phoneInput by remember { mutableStateOf("") }
         var noteInput by remember { mutableStateOf("") }
+        var contactCountryId by remember { mutableStateOf(selectedCountry) }
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
             title = { Text("Новый контакт") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Привязка к стране:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FilterChip(
+                            selected = contactCountryId == null,
+                            onClick = { contactCountryId = null },
+                            label = { Text("Общий") }
+                        )
+                        countries.forEach { c ->
+                            FilterChip(
+                                selected = contactCountryId == c.id,
+                                onClick = { contactCountryId = c.id },
+                                label = { Text("${c.flagEmoji} ${c.nameRu}") }
+                            )
+                        }
+                    }
+
                     OutlinedTextField(
                         value = labelInput,
                         onValueChange = { labelInput = it },
@@ -622,7 +686,8 @@ fun ContactsScreen(
                                         id = UUID.randomUUID().toString(),
                                         label = labelInput.trim(),
                                         phone = phoneInput.trim(),
-                                        note = noteInput.trim()
+                                        note = noteInput.trim(),
+                                        countryId = contactCountryId
                                     )
                                 )
                                 showAddDialog = false

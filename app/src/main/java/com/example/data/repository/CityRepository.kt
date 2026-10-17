@@ -5,6 +5,7 @@ import com.example.data.crypto.KeystoreHelper
 import com.example.data.database.CityDatabase
 import com.example.data.database.entity.ArticleEntity
 import com.example.data.database.entity.ArticleKind
+import com.example.data.database.entity.CanonicalDefaultSections
 import com.example.data.database.entity.ChecklistEntity
 import com.example.data.database.entity.ChecklistItemEntity
 import com.example.data.database.entity.ChecklistProgressEntity
@@ -78,8 +79,20 @@ class CityRepository(
         currencyCode: String,
         currencySymbol: String
     ): CountryEntity = withContext(Dispatchers.IO) {
-        val baseSlug = nameRu.lowercase().replace(" ", "_").filter { it in 'a'..'z' || it in '0'..'9' }.take(6)
-        val slug = if (baseSlug.isNotBlank()) baseSlug else "c_" + UUID.randomUUID().toString().take(4)
+        val transliterated = nameRu.lowercase().map { ch ->
+            when (ch) {
+                'а' -> "a"; 'б' -> "b"; 'в' -> "v"; 'г' -> "g"; 'д' -> "d"
+                'е' -> "e"; 'ё' -> "e"; 'ж' -> "zh"; 'з' -> "z"; 'и' -> "i"
+                'й' -> "y"; 'к' -> "k"; 'л' -> "l"; 'м' -> "m"; 'н' -> "n"
+                'о' -> "o"; 'п' -> "p"; 'р' -> "r"; 'с' -> "s"; 'т' -> "t"
+                'у' -> "u"; 'ф' -> "f"; 'х' -> "kh"; 'ц' -> "ts"; 'ч' -> "ch"
+                'ш' -> "sh"; 'щ' -> "shch"; 'ъ' -> ""; 'ы' -> "y"; 'ь' -> ""
+                'э' -> "e"; 'ю' -> "yu"; 'я' -> "ya"; ' ' -> "_"
+                in 'a'..'z', in '0'..'9' -> ch.toString()
+                else -> ""
+            }
+        }.joinToString("").take(6)
+        val slug = if (transliterated.isNotBlank()) transliterated else "c_" + UUID.randomUUID().toString().take(4)
         val country = CountryEntity(
             id = slug,
             code = slug.uppercase().take(2),
@@ -92,14 +105,17 @@ class CityRepository(
         )
         database.countryDao().insertCountry(country)
 
-        // 5 default sections according to docs/PRINCIPLES.md
-        val defaultSections = listOf(
-            SectionEntity(id = "$slug.status", countryId = slug, slug = "status", titleRu = "Статус и разрешения", iconKey = "badge", sortOrder = 1),
-            SectionEntity(id = "$slug.work", countryId = slug, slug = "work", titleRu = "Работа и права", iconKey = "work", sortOrder = 2),
-            SectionEntity(id = "$slug.tax", countryId = slug, slug = "tax", titleRu = "Налоги и зарплата", iconKey = "payments", sortOrder = 3),
-            SectionEntity(id = "$slug.housing", countryId = slug, slug = "housing", titleRu = "Жильё и аренда", iconKey = "home", sortOrder = 4),
-            SectionEntity(id = "$slug.health", countryId = slug, slug = "health", titleRu = "Здоровье и медицина", iconKey = "health_and_safety", sortOrder = 5)
+        // 5 default sections according to docs/PRINCIPLES.md (single source of truth: CanonicalDefaultSections)
+        val defaultSections = CanonicalDefaultSections.LIST.map { spec ->
+            SectionEntity(
+                id = "$slug.${spec.slug}",
+                countryId = slug,
+                slug = spec.slug,
+                titleRu = spec.titleRu,
+                iconKey = spec.iconKey,
+                sortOrder = spec.sortOrder
         )
+        }
         database.sectionDao().insertAll(defaultSections)
 
         // Initial empty glossary and phrasebook for this country
@@ -160,6 +176,7 @@ class CityRepository(
         database.articleDao().deleteArticlesForCountry(countryId)
         database.sectionDao().deleteSectionsForCountry(countryId)
         database.rateDao().deleteRatesForCountry(countryId)
+        database.contactDao().deleteContactsForCountry(countryId)
         database.countryDao().deleteCountry(countryId)
     }
 

@@ -166,3 +166,20 @@ data class ContentMetaEntity(
     @PrimaryKey val key: String,
     val value: String
 )
+
+data class CanonicalDefaultSection(
+    val slug: String,
+    val titleRu: String,
+    val iconKey: String,
+    val sortOrder: Int
+)
+
+object CanonicalDefaultSections {
+    val LIST = listOf(
+        CanonicalDefaultSection("status", "Статус и разрешения", "badge", 1),
+        CanonicalDefaultSection("work", "Работа и права", "work", 2),
+        CanonicalDefaultSection("tax", "Налоги и зарплата", "payments", 3),
+        CanonicalDefaultSection("housing", "Жильё и аренда", "home", 4),
+        CanonicalDefaultSection("health", "Здоровье и медицина", "health_and_safety", 5)
+    )
+}

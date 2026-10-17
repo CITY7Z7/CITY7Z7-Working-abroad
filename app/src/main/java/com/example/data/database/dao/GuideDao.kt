@@ -161,7 +161,7 @@ interface ChecklistDao {
 
 @Dao
 interface ContactDao {
-    @Query("SELECT * FROM user_contact WHERE countryId = :countryId OR countryId IS NULL ORDER BY label ASC")
+    @Query("SELECT * FROM user_contact WHERE (:countryId IS NULL OR countryId = :countryId) ORDER BY label ASC")
     fun getContacts(countryId: String?): Flow<List<UserContactEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -169,6 +169,9 @@ interface ContactDao {
 
     @Query("DELETE FROM user_contact WHERE id = :id")
     suspend fun deleteContact(id: String)
+
+    @Query("DELETE FROM user_contact WHERE countryId = :countryId")
+    suspend fun deleteContactsForCountry(countryId: String)
 }
 
 @Dao
